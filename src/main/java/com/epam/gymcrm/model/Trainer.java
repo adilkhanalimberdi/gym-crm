@@ -1,20 +1,58 @@
 package com.epam.gymcrm.model;
 
-public record Trainer(Long id,
-                      String firstName,
-                      String lastName,
-                      String username,
-                      String password,
-                      boolean active,
-                      TrainingType specialization) {
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
-    public Trainer withId(Long newId) {
-        return new Trainer(newId, firstName, lastName, username, password, active, specialization);
+@Entity
+@Table(name = "trainers")
+public class Trainer {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "specialization_id", nullable = false)
+    private TrainingType specialization;
+
+    @OneToOne(cascade = CascadeType.ALL, optional = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
+
+    protected Trainer() {
+        // required by JPA
     }
 
-    /** Password is deliberately left out so it can never leak into logs. */
+    public Trainer(User user, TrainingType specialization) {
+        this.user = user;
+        this.specialization = specialization;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public TrainingType getSpecialization() {
+        return specialization;
+    }
+
+    public void setSpecialization(TrainingType specialization) {
+        this.specialization = specialization;
+    }
+
     @Override
     public String toString() {
-        return "Trainer[id=" + id + ", username=" + username + ", specialization=" + specialization + "]";
+        return "Trainer[id=" + id + ", username=" + user.getUsername() + ", specialization=" + specialization + "]";
     }
 }
