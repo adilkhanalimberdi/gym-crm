@@ -1,97 +1,153 @@
 package com.epam.gymcrm.service;
 
 import com.epam.gymcrm.dao.TrainerDao;
+import com.epam.gymcrm.dao.TrainingTypeDao;
+import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.exception.EntityNotFoundException;
+import com.epam.gymcrm.exception.InvalidRequestException;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
+import com.epam.gymcrm.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TrainerServiceTest {
 
-    private static final Trainer TRAINER = new Trainer(1L, "Anna", "Lee", "Anna.Lee", "pw", true, TrainingType.YOGA);
+    private static final Credentials CREDENTIALS = new Credentials("Anna.Lee", "secret");
 
     @Mock
     private TrainerDao trainerDao;
     @Mock
+    private TrainingTypeDao trainingTypeDao;
+    @Mock
+    private AuthenticationService authenticationService;
+    @Mock
     private UsernameGenerator usernameGenerator;
     @Mock
     private PasswordGenerator passwordGenerator;
-
+    @Mock
+    private TrainingType yoga;
+    @Mock
+    private TrainingType zumba;
+    @InjectMocks
     private TrainerService service;
+
+    private Trainer trainer;
 
     @BeforeEach
     void setUp() {
-        service = new TrainerService();
-        service.setTrainerDao(trainerDao);
-        service.setUsernameGenerator(usernameGenerator);
-        service.setPasswordGenerator(passwordGenerator);
+        trainer = new Trainer(new User("Anna", "Lee", "Anna.Lee", "secret"), yoga);
     }
 
     @Test
-    void create_assignsGeneratedUsernameAndPasswordAndActivates() {
-        when(usernameGenerator.generate("Anna", "Lee")).thenReturn("Anna.Lee1");
-        when(passwordGenerator.generate()).thenReturn("zzzzz99999");
-        when(trainerDao.create(any(Trainer.class))).thenAnswer(inv -> ((Trainer) inv.getArgument(0)).withId(3L));
+    void create_generatesUsernameAndPasswordAndSavesActiveTrainer() {
+        when(trainingTypeDao.findByName("Yoga")).thenReturn(Optional.of(yoga));
+        when(usernameGenerator.generate("Anna", "Lee")).thenReturn("Anna.Lee");
+        when(passwordGenerator.generate()).thenReturn("abcde12345");
+        when(trainerDao.save(any(Trainer.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Trainer created = service.create("Anna", "Lee", TrainingType.YOGA);
+        Trainer created = service.create("Anna", "Lee", "Yoga");
 
-        ArgumentCaptor<Trainer> saved = ArgumentCaptor.forClass(Trainer.class);
-        verify(trainerDao).create(saved.capture());
-        assertEquals("Anna.Lee1", saved.getValue().username());
-        assertEquals("zzzzz99999", saved.getValue().password());
-        assertTrue(saved.getValue().active());
-        assertEquals(TrainingType.YOGA, saved.getValue().specialization());
-        assertEquals(3L, created.id());
+        assertEquals("Anna.Lee", created.getUser().getUsername());
+        assertEquals("abcde12345", created.getUser().getPassword());
+        assertTrue(created.getUser().isActive());
+        assertSame(yoga, created.getSpecialization());
     }
 
     @Test
-    void update_returnsTrainer_whenExists() {
-        when(trainerDao.update(TRAINER)).thenReturn(true);
-
-        assertEquals(TRAINER, service.update(TRAINER));
+    void create_rejectsMissingFirstName() {
+        assertThrows(InvalidRequestException.class, () -> service.create(null, "Lee", "Yoga"));
+        verifyNoInteractions(trainerDao);
     }
 
     @Test
-    void update_throws_whenMissing() {
-        when(trainerDao.update(TRAINER)).thenReturn(false);
-
-        assertThrows(EntityNotFoundException.class, () -> service.update(TRAINER));
+    void create_rejectsMissingSpecialization() {
+        assertThrows(InvalidRequestException.class, () -> service.create("Anna", "Lee", " "));
+        verifyNoInteractions(trainerDao);
     }
 
     @Test
-    void findById_returnsTrainer_whenExists() {
-        when(trainerDao.findById(1L)).thenReturn(Optional.of(TRAINER));
+    void create_rejectsUnknownSpecialization() {
+        when(trainingTypeDao.findByName("Chess")).thenReturn(Optional.empty());
 
-        assertEquals(TRAINER, service.findById(1L));
+        assertThrows(EntityNotFoundException.class, () -> service.create("Anna", "Lee", "Chess"));
+        verifyNoInteractions(trainerDao);
     }
 
     @Test
-    void findById_throws_whenMissing() {
-        when(trainerDao.findById(1L)).thenReturn(Optional.empty());
+    void credentialsMatch_delegatesToAuthentication() {
+        when(authenticationService.matchesTrainer(CREDENTIALS)).thenReturn(false);
 
-        assertThrows(EntityNotFoundException.class, () -> service.findById(1L));
+        assertFalse(service.credentialsMatch(CREDENTIALS));
     }
 
     @Test
-    void findAll_returnsAllTrainers() {
-        when(trainerDao.findAll()).thenReturn(List.of(TRAINER));
+    void getProfile_returnsAuthenticatedTrainer() {
+        when(authenticationService.authenticateTrainer(CREDENTIALS)).thenReturn(trainer);
 
-        assertEquals(List.of(TRAINER), service.findAll());
+        assertSame(trainer, service.getProfile(CREDENTIALS));
+    }
+
+    @Test
+    void changePassword_storesNewPassword() {
+        when(authenticationService.authenticateTrainer(CREDENTIALS)).thenReturn(trainer);
+
+        service.changePassword(CREDENTIALS, "newSecret");
+
+        assertEquals("newSecret", trainer.getUser().getPassword());
+    }
+
+    @Test
+    void changePassword_rejectsMissingPassword() {
+        when(authenticationService.authenticateTrainer(CREDENTIALS)).thenReturn(trainer);
+
+        assertThrows(InvalidRequestException.class, () -> service.changePassword(CREDENTIALS, null));
+    }
+
+    @Test
+    void update_changesNameAndSpecialization() {
+        when(authenticationService.authenticateTrainer(CREDENTIALS)).thenReturn(trainer);
+        when(trainingTypeDao.findByName("Zumba")).thenReturn(Optional.of(zumba));
+        when(trainerDao.update(trainer)).thenReturn(trainer);
+
+        Trainer updated = service.update(CREDENTIALS, "Annie", "Leigh", "Zumba");
+
+        assertEquals("Annie", updated.getUser().getFirstName());
+        assertEquals("Leigh", updated.getUser().getLastName());
+        assertSame(zumba, updated.getSpecialization());
+    }
+
+    @Test
+    void update_rejectsMissingFirstName_withoutSaving() {
+        when(authenticationService.authenticateTrainer(CREDENTIALS)).thenReturn(trainer);
+
+        assertThrows(InvalidRequestException.class, () -> service.update(CREDENTIALS, "", "Leigh", "Zumba"));
+        verify(trainerDao, never()).update(any());
+    }
+
+    @Test
+    void toggleActivation_flipsStateEachTime() {
+        when(authenticationService.authenticateTrainer(CREDENTIALS)).thenReturn(trainer);
+
+        assertFalse(service.toggleActivation(CREDENTIALS));
+        assertTrue(service.toggleActivation(CREDENTIALS));
     }
 }

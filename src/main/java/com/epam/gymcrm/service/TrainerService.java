@@ -1,69 +1,100 @@
 package com.epam.gymcrm.service;
 
 import com.epam.gymcrm.dao.TrainerDao;
+import com.epam.gymcrm.dao.TrainingTypeDao;
+import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
+import com.epam.gymcrm.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import static com.epam.gymcrm.service.Validation.requireText;
 
+/**
+ * Trainer use cases. Except for {@link #create}, every method first authenticates the caller and then
+ * works on that caller's own profile. Each public method runs in one transaction.
+ */
 @Service
+@Transactional
 public class TrainerService {
 
     private static final Logger log = LoggerFactory.getLogger(TrainerService.class);
 
-    private TrainerDao trainerDao;
-    private UsernameGenerator usernameGenerator;
-    private PasswordGenerator passwordGenerator;
+    private final TrainerDao trainerDao;
+    private final TrainingTypeDao trainingTypeDao;
+    private final AuthenticationService authenticationService;
+    private final UsernameGenerator usernameGenerator;
+    private final PasswordGenerator passwordGenerator;
 
-    public Trainer create(String firstName, String lastName, TrainingType specialization) {
-        log.info("Creating trainer {} {}", firstName, lastName);
-        // generator is shared with TraineeService, so it is the lock that keeps usernames unique
-        synchronized (usernameGenerator) {
-            String username = usernameGenerator.generate(firstName, lastName);
-            Trainer trainer = new Trainer(null, firstName, lastName, username,
-                    passwordGenerator.generate(), true, specialization);
-            Trainer created = trainerDao.create(trainer);
-            log.info("Created trainer {}", created);
-            return created;
-        }
+    public TrainerService(TrainerDao trainerDao,
+                          TrainingTypeDao trainingTypeDao,
+                          AuthenticationService authenticationService,
+                          UsernameGenerator usernameGenerator,
+                          PasswordGenerator passwordGenerator) {
+        this.trainerDao = trainerDao;
+        this.trainingTypeDao = trainingTypeDao;
+        this.authenticationService = authenticationService;
+        this.usernameGenerator = usernameGenerator;
+        this.passwordGenerator = passwordGenerator;
     }
 
-    public Trainer update(Trainer trainer) {
-        log.info("Updating trainer with id {}", trainer.id());
-        if (!trainerDao.update(trainer)) {
-            log.warn("Cannot update trainer: id {} not found", trainer.id());
-            throw new EntityNotFoundException("Trainer", trainer.id());
-        }
+    public Trainer create(String firstName, String lastName, String specializationName) {
+        String first = requireText(firstName, "First name");
+        String last = requireText(lastName, "Last name");
+        TrainingType specialization = findTrainingType(specializationName);
+        log.info("Creating trainer profile for {} {}", first, last);
+
+        User user = new User(first, last, usernameGenerator.generate(first, last), passwordGenerator.generate());
+        Trainer created = trainerDao.save(new Trainer(user, specialization));
+        log.info("Created trainer profile with username '{}'", user.getUsername());
+        return created;
+    }
+
+    @Transactional(readOnly = true)
+    public boolean credentialsMatch(Credentials credentials) {
+        log.debug("Checking trainer credentials for '{}'", credentials.username());
+        return authenticationService.matchesTrainer(credentials);
+    }
+
+    @Transactional(readOnly = true)
+    public Trainer getProfile(Credentials credentials) {
+        Trainer trainer = authenticationService.authenticateTrainer(credentials);
+        log.debug("Selected trainer profile '{}'", credentials.username());
         return trainer;
     }
 
-    public Trainer findById(Long id) {
-        log.debug("Selecting trainer with id {}", id);
-        return trainerDao.findById(id).orElseThrow(() -> new EntityNotFoundException("Trainer", id));
+    public void changePassword(Credentials credentials, String newPassword) {
+        Trainer trainer = authenticationService.authenticateTrainer(credentials);
+        trainer.getUser().setPassword(requireText(newPassword, "New password"));
+        log.info("Changed password of trainer '{}'", credentials.username());
     }
 
-    public List<Trainer> findAll() {
-        log.debug("Selecting all trainers");
-        return trainerDao.findAll();
+    public Trainer update(Credentials credentials, String firstName, String lastName, String specializationName) {
+        Trainer trainer = authenticationService.authenticateTrainer(credentials);
+        trainer.getUser().setFirstName(requireText(firstName, "First name"));
+        trainer.getUser().setLastName(requireText(lastName, "Last name"));
+        trainer.setSpecialization(findTrainingType(specializationName));
+        log.info("Updated trainer profile '{}'", credentials.username());
+        return trainerDao.update(trainer);
     }
 
-    @Autowired
-    public void setTrainerDao(TrainerDao trainerDao) {
-        this.trainerDao = trainerDao;
+    /** Not idempotent: an active trainer becomes inactive and the other way round. Returns the new state. */
+    public boolean toggleActivation(Credentials credentials) {
+        User user = authenticationService.authenticateTrainer(credentials).getUser();
+        user.toggleActive();
+        log.info("Trainer '{}' is now {}", credentials.username(), user.isActive() ? "active" : "inactive");
+        return user.isActive();
     }
 
-    @Autowired
-    public void setUsernameGenerator(UsernameGenerator usernameGenerator) {
-        this.usernameGenerator = usernameGenerator;
-    }
-
-    @Autowired
-    public void setPasswordGenerator(PasswordGenerator passwordGenerator) {
-        this.passwordGenerator = passwordGenerator;
+    private TrainingType findTrainingType(String name) {
+        String typeName = requireText(name, "Specialization");
+        return trainingTypeDao.findByName(typeName).orElseThrow(() -> {
+            log.warn("Unknown training type '{}'", typeName);
+            return new EntityNotFoundException("Training type", typeName);
+        });
     }
 }

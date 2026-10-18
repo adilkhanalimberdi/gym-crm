@@ -3,65 +3,105 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.TrainingDao;
+import com.epam.gymcrm.dao.TrainingTypeDao;
+import com.epam.gymcrm.dto.Credentials;
+import com.epam.gymcrm.dto.NewTraining;
+import com.epam.gymcrm.dto.TraineeTrainingCriteria;
+import com.epam.gymcrm.dto.TrainerTrainingCriteria;
+import com.epam.gymcrm.exception.AccessDeniedException;
 import com.epam.gymcrm.exception.EntityNotFoundException;
+import com.epam.gymcrm.exception.InvalidRequestException;
+import com.epam.gymcrm.model.Trainee;
+import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
 import com.epam.gymcrm.model.TrainingType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
+import static com.epam.gymcrm.service.Validation.requireNonNull;
+import static com.epam.gymcrm.service.Validation.requirePositive;
+import static com.epam.gymcrm.service.Validation.requireText;
+
+/** Training use cases; every method first authenticates the caller and runs in one transaction. */
 @Service
+@Transactional
 public class TrainingService {
 
     private static final Logger log = LoggerFactory.getLogger(TrainingService.class);
 
-    private TrainingDao trainingDao;
-    private TraineeDao traineeDao;
-    private TrainerDao trainerDao;
+    private final TrainingDao trainingDao;
+    private final TraineeDao traineeDao;
+    private final TrainerDao trainerDao;
+    private final TrainingTypeDao trainingTypeDao;
+    private final AuthenticationService authenticationService;
 
-    public Training create(Long traineeId, Long trainerId, String trainingName,
-                           TrainingType trainingType, LocalDateTime trainingDate, int durationMinutes) {
-        log.info("Creating training '{}' for trainee {} with trainer {}", trainingName, traineeId, trainerId);
-        if (traineeDao.findById(traineeId).isEmpty()) {
-            log.warn("Cannot create training: trainee {} not found", traineeId);
-            throw new EntityNotFoundException("Trainee", traineeId);
-        }
-        if (trainerDao.findById(trainerId).isEmpty()) {
-            log.warn("Cannot create training: trainer {} not found", trainerId);
-            throw new EntityNotFoundException("Trainer", trainerId);
-        }
-        Training created = trainingDao.create(
-                new Training(null, traineeId, trainerId, trainingName, trainingType, trainingDate, durationMinutes));
-        log.info("Created training with id {}", created.id());
+    public TrainingService(TrainingDao trainingDao,
+                           TraineeDao traineeDao,
+                           TrainerDao trainerDao,
+                           TrainingTypeDao trainingTypeDao,
+                           AuthenticationService authenticationService) {
+        this.trainingDao = trainingDao;
+        this.traineeDao = traineeDao;
+        this.trainerDao = trainerDao;
+        this.trainingTypeDao = trainingTypeDao;
+        this.authenticationService = authenticationService;
+    }
+
+    /** The caller has to be the trainee or the trainer of the new training. */
+    public Training addTraining(Credentials credentials, NewTraining request) {
+        String trainingName = requireText(request.trainingName(), "Training name");
+        LocalDate trainingDate = requireNonNull(request.trainingDate(), "Training date");
+        int duration = requirePositive(request.duration(), "Training duration");
+
+        authenticationService.authenticate(credentials);
+        Trainee trainee = traineeDao.findByUsername(requireText(request.traineeUsername(), "Trainee username"))
+                .orElseThrow(() -> new EntityNotFoundException("Trainee", request.traineeUsername()));
+        Trainer trainer = trainerDao.findByUsername(requireText(request.trainerUsername(), "Trainer username"))
+                .orElseThrow(() -> new EntityNotFoundException("Trainer", request.trainerUsername()));
+        checkParticipant(credentials, trainee, trainer);
+        TrainingType type = trainingTypeDao.findByName(requireText(request.trainingTypeName(), "Training type"))
+                .orElseThrow(() -> new EntityNotFoundException("Training type", request.trainingTypeName()));
+
+        Training created = trainingDao.save(new Training(trainee, trainer, trainingName, type, trainingDate, duration));
+        log.info("Added training '{}' for trainee '{}' with trainer '{}'",
+                trainingName, request.traineeUsername(), request.trainerUsername());
         return created;
     }
 
-    public Training findById(Long id) {
-        log.debug("Selecting training with id {}", id);
-        return trainingDao.findById(id).orElseThrow(() -> new EntityNotFoundException("Training", id));
+    @Transactional(readOnly = true)
+    public List<Training> getTraineeTrainings(Credentials credentials, TraineeTrainingCriteria criteria) {
+        authenticationService.authenticateTrainee(credentials);
+        checkDateRange(criteria.fromDate(), criteria.toDate());
+        List<Training> trainings = trainingDao.findByTrainee(credentials.username(), criteria);
+        log.debug("Found {} trainings of trainee '{}'", trainings.size(), credentials.username());
+        return trainings;
     }
 
-    public List<Training> findAll() {
-        log.debug("Selecting all trainings");
-        return trainingDao.findAll();
+    @Transactional(readOnly = true)
+    public List<Training> getTrainerTrainings(Credentials credentials, TrainerTrainingCriteria criteria) {
+        authenticationService.authenticateTrainer(credentials);
+        checkDateRange(criteria.fromDate(), criteria.toDate());
+        List<Training> trainings = trainingDao.findByTrainer(credentials.username(), criteria);
+        log.debug("Found {} trainings of trainer '{}'", trainings.size(), credentials.username());
+        return trainings;
     }
 
-    @Autowired
-    public void setTrainingDao(TrainingDao trainingDao) {
-        this.trainingDao = trainingDao;
+    private void checkParticipant(Credentials credentials, Trainee trainee, Trainer trainer) {
+        String caller = credentials.username();
+        if (!caller.equals(trainee.getUser().getUsername()) && !caller.equals(trainer.getUser().getUsername())) {
+            log.warn("User '{}' tried to add a training they do not take part in", caller);
+            throw new AccessDeniedException("Only the trainee or the trainer can add this training");
+        }
     }
 
-    @Autowired
-    public void setTraineeDao(TraineeDao traineeDao) {
-        this.traineeDao = traineeDao;
-    }
-
-    @Autowired
-    public void setTrainerDao(TrainerDao trainerDao) {
-        this.trainerDao = trainerDao;
+    private void checkDateRange(LocalDate from, LocalDate to) {
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new InvalidRequestException("From date must not be after to date");
+        }
     }
 }
