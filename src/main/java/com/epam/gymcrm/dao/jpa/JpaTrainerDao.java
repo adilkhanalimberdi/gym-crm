@@ -1,0 +1,62 @@
+package com.epam.gymcrm.dao.jpa;
+
+import com.epam.gymcrm.dao.TrainerDao;
+import com.epam.gymcrm.model.Trainer;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.stereotype.Repository;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public class JpaTrainerDao implements TrainerDao {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Override
+    public Trainer save(Trainer trainer) {
+        entityManager.persist(trainer);
+        return trainer;
+    }
+
+    @Override
+    public Trainer update(Trainer trainer) {
+        return entityManager.merge(trainer);
+    }
+
+    @Override
+    public Optional<Trainer> findByUsername(String username) {
+        return entityManager
+                .createQuery("select t from Trainer t where t.user.username = :username", Trainer.class)
+                .setParameter("username", username)
+                .getResultStream()
+                .findFirst();
+    }
+
+    @Override
+    public List<Trainer> findAllByUsernames(Collection<String> usernames) {
+        if (usernames.isEmpty()) {
+            return List.of();
+        }
+        return entityManager
+                .createQuery("select t from Trainer t where t.user.username in :usernames", Trainer.class)
+                .setParameter("usernames", usernames)
+                .getResultList();
+    }
+
+    @Override
+    public List<Trainer> findNotAssignedToTrainee(String traineeUsername) {
+        return entityManager
+                .createQuery("""
+                        select t from Trainer t
+                        where t not in (select assigned from Trainee te join te.trainers assigned
+                                        where te.user.username = :username)
+                        order by t.user.username
+                        """, Trainer.class)
+                .setParameter("username", traineeUsername)
+                .getResultList();
+    }
+}
