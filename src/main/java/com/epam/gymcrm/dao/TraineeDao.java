@@ -2,12 +2,16 @@ package com.epam.gymcrm.dao;
 
 import com.epam.gymcrm.model.Trainee;
 
-public interface TraineeDao extends Dao<Trainee> {
+import java.util.Optional;
 
-    /** Replaces an existing trainee; returns false if no trainee has that id. */
-    boolean update(Trainee trainee);
+public interface TraineeDao {
 
-    boolean deleteById(Long id);
+    Trainee save(Trainee trainee);
 
-    boolean existsByUsername(String username);
+    Trainee update(Trainee trainee);
+
+    /** Hard delete; also removes the trainee's user and trainings. */
+    void delete(Trainee trainee);
+
+    Optional<Trainee> findByUsername(String username);
 }
