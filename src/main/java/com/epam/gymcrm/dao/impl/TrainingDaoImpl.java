@@ -1,6 +1,6 @@
 package com.epam.gymcrm.dao.impl;
 
-import com.epam.gymcrm.config.StorageConfig;
+import com.epam.gymcrm.storage.InMemoryStorageConfig;
 import com.epam.gymcrm.dao.TrainingDao;
 import com.epam.gymcrm.model.Training;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,7 @@ import java.util.Map;
 public class TrainingDaoImpl extends AbstractInMemoryDao<Training> implements TrainingDao {
 
     @Autowired
-    public void setStorage(@Qualifier(StorageConfig.TRAINING_STORAGE) Map<Long, Training> storage) {
+    public void setStorage(@Qualifier(InMemoryStorageConfig.TRAINING_STORAGE) Map<Long, Training> storage) {
         useStorage(storage);
     }
 

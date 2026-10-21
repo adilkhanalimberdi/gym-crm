@@ -1,4 +1,4 @@
-package com.epam.gymcrm.config;
+package com.epam.gymcrm.storage;
 
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** One in-memory storage (java.util.Map) per entity type, each its own Spring bean. */
 @Configuration
-public class StorageConfig {
+public class InMemoryStorageConfig {
 
     public static final String TRAINEE_STORAGE = "traineeStorage";
     public static final String TRAINER_STORAGE = "trainerStorage";

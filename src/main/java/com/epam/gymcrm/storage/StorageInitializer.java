@@ -1,6 +1,5 @@
 package com.epam.gymcrm.storage;
 
-import com.epam.gymcrm.config.StorageConfig;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
@@ -45,9 +44,9 @@ public class StorageInitializer implements BeanPostProcessor {
             return bean;
         }
         switch (beanName) {
-            case StorageConfig.TRAINEE_STORAGE -> load(TRAINEE, (Map<Long, Trainee>) bean, StorageInitializer::toTrainee);
-            case StorageConfig.TRAINER_STORAGE -> load(TRAINER, (Map<Long, Trainer>) bean, StorageInitializer::toTrainer);
-            case StorageConfig.TRAINING_STORAGE -> load(TRAINING, (Map<Long, Training>) bean, StorageInitializer::toTraining);
+            case InMemoryStorageConfig.TRAINEE_STORAGE -> load(TRAINEE, (Map<Long, Trainee>) bean, StorageInitializer::toTrainee);
+            case InMemoryStorageConfig.TRAINER_STORAGE -> load(TRAINER, (Map<Long, Trainer>) bean, StorageInitializer::toTrainer);
+            case InMemoryStorageConfig.TRAINING_STORAGE -> load(TRAINING, (Map<Long, Training>) bean, StorageInitializer::toTraining);
             default -> { /* not a storage bean */ }
         }
         return bean;

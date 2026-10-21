@@ -1,6 +1,5 @@
 package com.epam.gymcrm.storage;
 
-import com.epam.gymcrm.config.StorageConfig;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
@@ -43,7 +42,7 @@ class StorageInitializerTest {
     void loadsTraineesIntoTraineeStorageOnly() throws IOException {
         Map<Long, Trainee> storage = new HashMap<>();
 
-        Object result = initializerFor(DATA).postProcessAfterInitialization(storage, StorageConfig.TRAINEE_STORAGE);
+        Object result = initializerFor(DATA).postProcessAfterInitialization(storage, InMemoryStorageConfig.TRAINEE_STORAGE);
 
         assertSame(storage, result);
         assertEquals(1, storage.size());
@@ -55,7 +54,7 @@ class StorageInitializerTest {
     void loadsTrainersIntoTrainerStorage() throws IOException {
         Map<Long, Trainer> storage = new HashMap<>();
 
-        initializerFor(DATA).postProcessAfterInitialization(storage, StorageConfig.TRAINER_STORAGE);
+        initializerFor(DATA).postProcessAfterInitialization(storage, InMemoryStorageConfig.TRAINER_STORAGE);
 
         assertEquals(TrainingType.YOGA, storage.get(2L).specialization());
         assertEquals(false, storage.get(2L).active());
@@ -65,7 +64,7 @@ class StorageInitializerTest {
     void loadsTrainingsIntoTrainingStorage() throws IOException {
         Map<Long, Training> storage = new HashMap<>();
 
-        initializerFor(DATA).postProcessAfterInitialization(storage, StorageConfig.TRAINING_STORAGE);
+        initializerFor(DATA).postProcessAfterInitialization(storage, InMemoryStorageConfig.TRAINING_STORAGE);
 
         assertEquals(60, storage.get(3L).durationMinutes());
         assertEquals("Morning Yoga", storage.get(3L).trainingName());
@@ -84,8 +83,8 @@ class StorageInitializerTest {
     void skipsLoading_whenNoFileConfigured() {
         Map<Long, Trainee> storage = new HashMap<>();
 
-        new StorageInitializer("").postProcessAfterInitialization(storage, StorageConfig.TRAINEE_STORAGE);
-        new StorageInitializer(null).postProcessAfterInitialization(storage, StorageConfig.TRAINEE_STORAGE);
+        new StorageInitializer("").postProcessAfterInitialization(storage, InMemoryStorageConfig.TRAINEE_STORAGE);
+        new StorageInitializer(null).postProcessAfterInitialization(storage, InMemoryStorageConfig.TRAINEE_STORAGE);
 
         assertTrue(storage.isEmpty());
     }
@@ -95,7 +94,7 @@ class StorageInitializerTest {
         StorageInitializer initializer = initializerFor("TRAINEE,not-a-number,John\n");
 
         assertThrows(IllegalStateException.class,
-                () -> initializer.postProcessAfterInitialization(new HashMap<Long, Trainee>(), StorageConfig.TRAINEE_STORAGE));
+                () -> initializer.postProcessAfterInitialization(new HashMap<Long, Trainee>(), InMemoryStorageConfig.TRAINEE_STORAGE));
     }
 
     @Test
@@ -103,6 +102,6 @@ class StorageInitializerTest {
         StorageInitializer initializer = new StorageInitializer(tempDir.resolve("missing.txt").toUri().toString());
 
         assertThrows(UncheckedIOException.class,
-                () -> initializer.postProcessAfterInitialization(new HashMap<Long, Trainee>(), StorageConfig.TRAINEE_STORAGE));
+                () -> initializer.postProcessAfterInitialization(new HashMap<Long, Trainee>(), InMemoryStorageConfig.TRAINEE_STORAGE));
     }
 }
