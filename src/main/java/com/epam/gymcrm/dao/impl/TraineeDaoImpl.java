@@ -1,6 +1,7 @@
 package com.epam.gymcrm.dao.impl;
 
 import com.epam.gymcrm.storage.InMemoryStorageConfig;
+import com.epam.gymcrm.storage.UsernameIndex;
 import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.model.Trainee;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +13,21 @@ import java.util.Map;
 @Repository
 public class TraineeDaoImpl extends AbstractInMemoryDao<Trainee> implements TraineeDao {
 
+    private UsernameIndex usernameIndex;
+
     @Autowired
     public void setStorage(@Qualifier(InMemoryStorageConfig.TRAINEE_STORAGE) Map<Long, Trainee> storage) {
         useStorage(storage);
+    }
+
+    @Autowired
+    public void setUsernameIndex(UsernameIndex usernameIndex) {
+        this.usernameIndex = usernameIndex;
+    }
+
+    @Override
+    public Trainee create(Trainee trainee) {
+        return usernameIndex.insertIfFree(trainee.username(), () -> super.create(trainee));
     }
 
     @Override

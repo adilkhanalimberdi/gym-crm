@@ -1,6 +1,9 @@
 package com.epam.gymcrm;
 
 import com.epam.gymcrm.config.AppConfig;
+import com.epam.gymcrm.dto.request.CreateTraineeRequest;
+import com.epam.gymcrm.dto.request.CreateTrainerRequest;
+import com.epam.gymcrm.dto.request.CreateTrainingRequest;
 import com.epam.gymcrm.facade.GymFacade;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
@@ -24,10 +27,12 @@ public class GymCrmApplication {
             log.info("Seeded trainers: {}", facade.getAllTrainers());
             log.info("Seeded trainings: {}", facade.getAllTrainings());
 
-            Trainee trainee = facade.createTrainee("John", "Smith", LocalDate.of(1992, 7, 20), "7 River Road");
-            Trainer trainer = facade.createTrainer("Anna", "Lee", TrainingType.CARDIO);
-            facade.createTraining(trainee.id(), trainer.id(), "Evening Cardio",
-                    TrainingType.CARDIO, LocalDateTime.now().plusDays(1), 45);
+            Trainee trainee = facade.createTrainee(
+                    new CreateTraineeRequest("John", "Smith", LocalDate.of(1992, 7, 20), "7 River Road"));
+            Trainer trainer = facade.createTrainer(
+                    new CreateTrainerRequest("Anna", "Lee", TrainingType.CARDIO));
+            facade.createTraining(new CreateTrainingRequest(trainee.id(), trainer.id(), "Evening Cardio",
+                    TrainingType.CARDIO, LocalDateTime.now().plusDays(1), 45));
 
             log.info("Trainees now: {}", facade.getAllTrainees());
             log.info("Trainers now: {}", facade.getAllTrainers());

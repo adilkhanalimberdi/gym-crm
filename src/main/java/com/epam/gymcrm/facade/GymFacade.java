@@ -1,16 +1,16 @@
 package com.epam.gymcrm.facade;
 
+import com.epam.gymcrm.dto.request.CreateTraineeRequest;
+import com.epam.gymcrm.dto.request.CreateTrainerRequest;
+import com.epam.gymcrm.dto.request.CreateTrainingRequest;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
-import com.epam.gymcrm.model.TrainingType;
 import com.epam.gymcrm.service.TraineeService;
 import com.epam.gymcrm.service.TrainerService;
 import com.epam.gymcrm.service.TrainingService;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /** Single entry point to the gym CRM; services are injected through the constructor. */
@@ -27,8 +27,8 @@ public class GymFacade {
         this.trainingService = trainingService;
     }
 
-    public Trainee createTrainee(String firstName, String lastName, LocalDate dateOfBirth, String address) {
-        return traineeService.create(firstName, lastName, dateOfBirth, address);
+    public Trainee createTrainee(CreateTraineeRequest request) {
+        return traineeService.create(request);
     }
 
     public Trainee updateTrainee(Trainee trainee) {
@@ -47,8 +47,8 @@ public class GymFacade {
         return traineeService.findAll();
     }
 
-    public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
-        return trainerService.create(firstName, lastName, specialization);
+    public Trainer createTrainer(CreateTrainerRequest request) {
+        return trainerService.create(request);
     }
 
     public Trainer updateTrainer(Trainer trainer) {
@@ -63,9 +63,8 @@ public class GymFacade {
         return trainerService.findAll();
     }
 
-    public Training createTraining(Long traineeId, Long trainerId, String trainingName,
-                                   TrainingType trainingType, LocalDateTime trainingDate, int durationMinutes) {
-        return trainingService.create(traineeId, trainerId, trainingName, trainingType, trainingDate, durationMinutes);
+    public Training createTraining(CreateTrainingRequest request) {
+        return trainingService.create(request);
     }
 
     public Training getTraining(Long id) {

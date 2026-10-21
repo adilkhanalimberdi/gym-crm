@@ -26,15 +26,12 @@ public class TrainerService {
     public Trainer create(CreateTrainerRequest request) {
         log.info("Creating trainer {} {}", request.firstName(), request.lastName());
         String password = passwordGenerator.generate();
-        // generator is shared with TraineeService, so it is the lock that keeps usernames unique
-        synchronized (usernameGenerator) {
-            String username = usernameGenerator.generate(request.firstName(), request.lastName());
-            Trainer created = trainerDao.create(
-                    mapper.toEntity(request, username, password)
-            );
-            log.info("Created trainer {}", created);
-            return created;
-        }
+        Trainer created = usernameGenerator.createWithUniqueUsername(
+                request.firstName(), request.lastName(),
+                username -> trainerDao.create(mapper.toEntity(request, username, password))
+        );
+        log.info("Created trainer {}", created);
+        return created;
     }
 
     public Trainer update(Trainer trainer) {

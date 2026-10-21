@@ -3,7 +3,9 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.TrainingDao;
+import com.epam.gymcrm.dto.request.CreateTrainingRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
+import com.epam.gymcrm.mapper.TrainingMapper;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
@@ -50,6 +52,11 @@ class TrainingServiceTest {
         service.setTrainingDao(trainingDao);
         service.setTraineeDao(traineeDao);
         service.setTrainerDao(trainerDao);
+        service.setTrainingMapper(new TrainingMapper());
+    }
+
+    private static CreateTrainingRequest request() {
+        return new CreateTrainingRequest(1L, 2L, "Yoga", TrainingType.YOGA, DATE, 60);
     }
 
     @Test
@@ -58,7 +65,7 @@ class TrainingServiceTest {
         when(trainerDao.findById(2L)).thenReturn(Optional.of(trainer));
         when(trainingDao.create(any(Training.class))).thenAnswer(inv -> ((Training) inv.getArgument(0)).withId(1L));
 
-        Training created = service.create(1L, 2L, "Yoga", TrainingType.YOGA, DATE, 60);
+        Training created = service.create(request());
 
         assertEquals(TRAINING, created);
     }
@@ -67,8 +74,7 @@ class TrainingServiceTest {
     void create_throws_whenTraineeMissing() {
         when(traineeDao.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.create(1L, 2L, "Yoga", TrainingType.YOGA, DATE, 60));
+        assertThrows(EntityNotFoundException.class, () -> service.create(request()));
         verify(trainingDao, never()).create(any());
     }
 
@@ -77,8 +83,7 @@ class TrainingServiceTest {
         when(traineeDao.findById(1L)).thenReturn(Optional.of(trainee));
         when(trainerDao.findById(2L)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.create(1L, 2L, "Yoga", TrainingType.YOGA, DATE, 60));
+        assertThrows(EntityNotFoundException.class, () -> service.create(request()));
         verify(trainingDao, never()).create(any());
     }
 

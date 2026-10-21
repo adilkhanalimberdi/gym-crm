@@ -1,6 +1,8 @@
 package com.epam.gymcrm;
 
 import com.epam.gymcrm.config.AppConfig;
+import com.epam.gymcrm.dto.request.CreateTraineeRequest;
+import com.epam.gymcrm.dto.request.CreateTrainerRequest;
 import com.epam.gymcrm.facade.GymFacade;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
@@ -44,9 +46,11 @@ class ApplicationContextTest {
             GymFacade facade = context.getBean(GymFacade.class);
 
             // John.Smith already exists in the seed data as a trainee
-            Trainee second = facade.createTrainee("John", "Smith", LocalDate.of(1992, 7, 20), "Road");
-            Trainer third = facade.createTrainer("John", "Smith", TrainingType.CARDIO);
-            Trainee fourth = facade.createTrainee("John", "Smith", LocalDate.of(1993, 1, 1), "Lane");
+            Trainee second = facade.createTrainee(
+                    new CreateTraineeRequest("John", "Smith", LocalDate.of(1992, 7, 20), "Road"));
+            Trainer third = facade.createTrainer(new CreateTrainerRequest("John", "Smith", TrainingType.CARDIO));
+            Trainee fourth = facade.createTrainee(
+                    new CreateTraineeRequest("John", "Smith", LocalDate.of(1993, 1, 1), "Lane"));
 
             assertEquals("John.Smith1", second.username());
             assertEquals("John.Smith2", third.username());

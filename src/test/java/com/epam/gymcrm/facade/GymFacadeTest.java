@@ -1,5 +1,8 @@
 package com.epam.gymcrm.facade;
 
+import com.epam.gymcrm.dto.request.CreateTraineeRequest;
+import com.epam.gymcrm.dto.request.CreateTrainerRequest;
+import com.epam.gymcrm.dto.request.CreateTrainingRequest;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
@@ -42,12 +45,13 @@ class GymFacadeTest {
 
     @Test
     void traineeOperations_delegateToTraineeService() {
-        when(traineeService.create("John", "Smith", BIRTH, "Street")).thenReturn(trainee);
+        CreateTraineeRequest request = new CreateTraineeRequest("John", "Smith", BIRTH, "Street");
+        when(traineeService.create(request)).thenReturn(trainee);
         when(traineeService.update(trainee)).thenReturn(trainee);
         when(traineeService.findById(1L)).thenReturn(trainee);
         when(traineeService.findAll()).thenReturn(List.of(trainee));
 
-        assertEquals(trainee, facade.createTrainee("John", "Smith", BIRTH, "Street"));
+        assertEquals(trainee, facade.createTrainee(request));
         assertEquals(trainee, facade.updateTrainee(trainee));
         assertEquals(trainee, facade.getTrainee(1L));
         assertEquals(List.of(trainee), facade.getAllTrainees());
@@ -57,12 +61,13 @@ class GymFacadeTest {
 
     @Test
     void trainerOperations_delegateToTrainerService() {
-        when(trainerService.create("Anna", "Lee", TrainingType.YOGA)).thenReturn(trainer);
+        CreateTrainerRequest request = new CreateTrainerRequest("Anna", "Lee", TrainingType.YOGA);
+        when(trainerService.create(request)).thenReturn(trainer);
         when(trainerService.update(trainer)).thenReturn(trainer);
         when(trainerService.findById(2L)).thenReturn(trainer);
         when(trainerService.findAll()).thenReturn(List.of(trainer));
 
-        assertEquals(trainer, facade.createTrainer("Anna", "Lee", TrainingType.YOGA));
+        assertEquals(trainer, facade.createTrainer(request));
         assertEquals(trainer, facade.updateTrainer(trainer));
         assertEquals(trainer, facade.getTrainer(2L));
         assertEquals(List.of(trainer), facade.getAllTrainers());
@@ -70,11 +75,12 @@ class GymFacadeTest {
 
     @Test
     void trainingOperations_delegateToTrainingService() {
-        when(trainingService.create(1L, 2L, "Yoga", TrainingType.YOGA, WHEN, 60)).thenReturn(training);
+        CreateTrainingRequest request = new CreateTrainingRequest(1L, 2L, "Yoga", TrainingType.YOGA, WHEN, 60);
+        when(trainingService.create(request)).thenReturn(training);
         when(trainingService.findById(3L)).thenReturn(training);
         when(trainingService.findAll()).thenReturn(List.of(training));
 
-        assertEquals(training, facade.createTraining(1L, 2L, "Yoga", TrainingType.YOGA, WHEN, 60));
+        assertEquals(training, facade.createTraining(request));
         assertEquals(training, facade.getTraining(3L));
         assertEquals(List.of(training), facade.getAllTrainings());
     }

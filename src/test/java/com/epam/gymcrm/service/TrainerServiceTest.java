@@ -1,7 +1,9 @@
 package com.epam.gymcrm.service;
 
 import com.epam.gymcrm.dao.TrainerDao;
+import com.epam.gymcrm.dto.request.CreateTrainerRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
+import com.epam.gymcrm.mapper.TrainerMapper;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,11 +15,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,15 +45,18 @@ class TrainerServiceTest {
         service.setTrainerDao(trainerDao);
         service.setUsernameGenerator(usernameGenerator);
         service.setPasswordGenerator(passwordGenerator);
+        service.setTrainerMapper(new TrainerMapper());
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void create_assignsGeneratedUsernameAndPasswordAndActivates() {
-        when(usernameGenerator.generate("Anna", "Lee")).thenReturn("Anna.Lee1");
+        when(usernameGenerator.createWithUniqueUsername(eq("Anna"), eq("Lee"), any()))
+                .thenAnswer(inv -> ((Function<String, Object>) inv.getArgument(2)).apply("Anna.Lee1"));
         when(passwordGenerator.generate()).thenReturn("zzzzz99999");
         when(trainerDao.create(any(Trainer.class))).thenAnswer(inv -> ((Trainer) inv.getArgument(0)).withId(3L));
 
-        Trainer created = service.create("Anna", "Lee", TrainingType.YOGA);
+        Trainer created = service.create(new CreateTrainerRequest("Anna", "Lee", TrainingType.YOGA));
 
         ArgumentCaptor<Trainer> saved = ArgumentCaptor.forClass(Trainer.class);
         verify(trainerDao).create(saved.capture());

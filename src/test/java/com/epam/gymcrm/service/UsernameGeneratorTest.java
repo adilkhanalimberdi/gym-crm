@@ -2,12 +2,14 @@ package com.epam.gymcrm.service;
 
 import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.dao.TrainerDao;
+import com.epam.gymcrm.exception.DuplicateUsernameException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,5 +60,22 @@ class UsernameGeneratorTest {
         when(trainerDao.existsByUsername(anyString())).thenAnswer(inv -> trainerNames.contains(inv.<String>getArgument(0)));
 
         assertEquals("John.Smith3", generator.generate("John", "Smith"));
+    }
+
+    @Test
+    void createWithUniqueUsername_retriesWithNextUsername_whenSaveRejectsDuplicate() {
+        Set<String> taken = new HashSet<>();
+        when(traineeDao.existsByUsername(anyString())).thenAnswer(inv -> taken.contains(inv.<String>getArgument(0)));
+
+        String saved = generator.createWithUniqueUsername("John", "Smith", username -> {
+            if (username.equals("John.Smith")) {
+                // someone else grabbed it between generate() and save
+                taken.add(username);
+                throw new DuplicateUsernameException(username);
+            }
+            return username;
+        });
+
+        assertEquals("John.Smith1", saved);
     }
 }

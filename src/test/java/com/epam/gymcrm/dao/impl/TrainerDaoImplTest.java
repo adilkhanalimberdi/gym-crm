@@ -1,7 +1,9 @@
 package com.epam.gymcrm.dao.impl;
 
+import com.epam.gymcrm.exception.DuplicateUsernameException;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
+import com.epam.gymcrm.storage.UsernameIndex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +12,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TrainerDaoImplTest {
@@ -22,10 +25,19 @@ class TrainerDaoImplTest {
         storage = new HashMap<>();
         dao = new TrainerDaoImpl();
         dao.setStorage(storage);
+        dao.setUsernameIndex(new UsernameIndex(new HashMap<>(), storage));
     }
 
     private static Trainer trainer(Long id, String username) {
         return new Trainer(id, "Anna", "Lee", username, "pw", true, TrainingType.YOGA);
+    }
+
+    @Test
+    void create_throws_whenUsernameTaken() {
+        dao.create(trainer(null, "Anna.Lee"));
+
+        assertThrows(DuplicateUsernameException.class, () -> dao.create(trainer(null, "Anna.Lee")));
+        assertEquals(1, storage.size());
     }
 
     @Test

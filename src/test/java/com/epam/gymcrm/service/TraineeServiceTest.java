@@ -1,7 +1,9 @@
 package com.epam.gymcrm.service;
 
 import com.epam.gymcrm.dao.TraineeDao;
+import com.epam.gymcrm.dto.request.CreateTraineeRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
+import com.epam.gymcrm.mapper.TraineeMapper;
 import com.epam.gymcrm.model.Trainee;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,11 +15,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,15 +46,19 @@ class TraineeServiceTest {
         service.setTraineeDao(traineeDao);
         service.setUsernameGenerator(usernameGenerator);
         service.setPasswordGenerator(passwordGenerator);
+        service.setTraineeMapper(new TraineeMapper());
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void create_assignsGeneratedUsernameAndPasswordAndActivates() {
-        when(usernameGenerator.generate("John", "Smith")).thenReturn("John.Smith");
+        when(usernameGenerator.createWithUniqueUsername(eq("John"), eq("Smith"), any()))
+                .thenAnswer(inv -> ((Function<String, Object>) inv.getArgument(2)).apply("John.Smith"));
         when(passwordGenerator.generate()).thenReturn("abcde12345");
         when(traineeDao.create(any(Trainee.class))).thenAnswer(inv -> ((Trainee) inv.getArgument(0)).withId(7L));
 
-        Trainee created = service.create("John", "Smith", LocalDate.of(1990, 1, 1), "Street 1");
+        Trainee created = service.create(
+                new CreateTraineeRequest("John", "Smith", LocalDate.of(1990, 1, 1), "Street 1"));
 
         ArgumentCaptor<Trainee> saved = ArgumentCaptor.forClass(Trainee.class);
         verify(traineeDao).create(saved.capture());
