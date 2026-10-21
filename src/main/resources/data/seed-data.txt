@@ -1,0 +1,10 @@
+# Seed data for the in-memory storages. Fields are comma separated; lines starting with '#' are ignored.
+# TRAINEE,id,firstName,lastName,username,password,active,dateOfBirth,address
+# TRAINER,id,firstName,lastName,username,password,active,specialization
+# TRAINING,id,traineeId,trainerId,name,type,dateTime,durationMinutes
+TRAINEE,1,John,Smith,John.Smith,seedPass01,true,1990-05-14,12 Main Street
+TRAINEE,2,Emily,Brown,Emily.Brown,seedPass02,true,1995-11-02,45 Oak Avenue
+TRAINER,1,Anna,Lee,Anna.Lee,seedPass03,true,YOGA
+TRAINER,2,Mark,Taylor,Mark.Taylor,seedPass04,true,STRENGTH
+TRAINING,1,1,1,Morning Yoga,YOGA,2025-03-01T09:00,60
+TRAINING,2,2,2,Heavy Lifting,STRENGTH,2025-03-02T18:30,90
