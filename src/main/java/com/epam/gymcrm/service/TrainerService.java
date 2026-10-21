@@ -1,9 +1,10 @@
 package com.epam.gymcrm.service;
 
 import com.epam.gymcrm.dao.TrainerDao;
+import com.epam.gymcrm.dto.request.CreateTrainerRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
+import com.epam.gymcrm.mapper.TrainerMapper;
 import com.epam.gymcrm.model.Trainer;
-import com.epam.gymcrm.model.TrainingType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,14 +21,17 @@ public class TrainerService {
     private UsernameGenerator usernameGenerator;
     private PasswordGenerator passwordGenerator;
 
-    public Trainer create(String firstName, String lastName, TrainingType specialization) {
-        log.info("Creating trainer {} {}", firstName, lastName);
+    private TrainerMapper mapper;
+
+    public Trainer create(CreateTrainerRequest request) {
+        log.info("Creating trainer {} {}", request.firstName(), request.lastName());
+        String password = passwordGenerator.generate();
         // generator is shared with TraineeService, so it is the lock that keeps usernames unique
         synchronized (usernameGenerator) {
-            String username = usernameGenerator.generate(firstName, lastName);
-            Trainer trainer = new Trainer(null, firstName, lastName, username,
-                    passwordGenerator.generate(), true, specialization);
-            Trainer created = trainerDao.create(trainer);
+            String username = usernameGenerator.generate(request.firstName(), request.lastName());
+            Trainer created = trainerDao.create(
+                    mapper.toEntity(request, username, password)
+            );
             log.info("Created trainer {}", created);
             return created;
         }
@@ -66,4 +70,10 @@ public class TrainerService {
     public void setPasswordGenerator(PasswordGenerator passwordGenerator) {
         this.passwordGenerator = passwordGenerator;
     }
+
+    @Autowired
+    public void setTrainerMapper(TrainerMapper mapper) {
+        this.mapper = mapper;
+    }
+
 }

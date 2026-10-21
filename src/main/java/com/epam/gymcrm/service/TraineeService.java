@@ -1,14 +1,15 @@
 package com.epam.gymcrm.service;
 
 import com.epam.gymcrm.dao.TraineeDao;
+import com.epam.gymcrm.dto.request.CreateTraineeRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
+import com.epam.gymcrm.mapper.TraineeMapper;
 import com.epam.gymcrm.model.Trainee;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -20,14 +21,17 @@ public class TraineeService {
     private UsernameGenerator usernameGenerator;
     private PasswordGenerator passwordGenerator;
 
-    public Trainee create(String firstName, String lastName, LocalDate dateOfBirth, String address) {
-        log.info("Creating trainee {} {}", firstName, lastName);
+    private TraineeMapper mapper;
+
+    public Trainee create(CreateTraineeRequest request) {
+        log.info("Creating trainee {} {}", request.firstName(), request.lastName());
+        String password = passwordGenerator.generate();
         // generator is shared with TrainerService, so it is the lock that keeps usernames unique
         synchronized (usernameGenerator) {
-            String username = usernameGenerator.generate(firstName, lastName);
-            Trainee trainee = new Trainee(null, firstName, lastName, username,
-                    passwordGenerator.generate(), true, dateOfBirth, address);
-            Trainee created = traineeDao.create(trainee);
+            String username = usernameGenerator.generate(request.firstName(), request.lastName());
+            Trainee created = traineeDao.create(
+                    mapper.toEntity(request, username, password)
+            );
             log.info("Created trainee {}", created);
             return created;
         }
@@ -73,5 +77,10 @@ public class TraineeService {
     @Autowired
     public void setPasswordGenerator(PasswordGenerator passwordGenerator) {
         this.passwordGenerator = passwordGenerator;
+    }
+
+	@Autowired
+	public void setTraineeMapper(TraineeMapper mapper) {
+        this.mapper = mapper;
     }
 }

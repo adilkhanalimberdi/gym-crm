@@ -1,5 +1,7 @@
 package com.epam.gymcrm.model;
 
+import org.springframework.lang.NonNull;
+
 public record Trainer(Long id,
                       String firstName,
                       String lastName,
@@ -12,8 +14,8 @@ public record Trainer(Long id,
         return new Trainer(newId, firstName, lastName, username, password, active, specialization);
     }
 
-    /** Password is deliberately left out so it can never leak into logs. */
     @Override
+    @NonNull
     public String toString() {
         return "Trainer[id=" + id + ", username=" + username + ", specialization=" + specialization + "]";
     }
