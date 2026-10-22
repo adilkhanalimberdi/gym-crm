@@ -3,9 +3,12 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dto.Credentials;
+import com.epam.gymcrm.dto.request.CreateTraineeRequest;
+import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
 import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.exception.InvalidRequestException;
+import com.epam.gymcrm.mapper.TraineeMapper;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
@@ -15,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
@@ -46,6 +50,8 @@ class TraineeServiceTest {
     private UsernameGenerator usernameGenerator;
     @Mock
     private PasswordGenerator passwordGenerator;
+    @Spy
+    private TraineeMapper mapper = new TraineeMapper();
     @InjectMocks
     private TraineeService service;
 
@@ -66,7 +72,7 @@ class TraineeServiceTest {
         when(passwordGenerator.generate()).thenReturn("abcde12345");
         when(traineeDao.save(any(Trainee.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Trainee created = service.create(" John ", "Smith", LocalDate.of(1990, 1, 1), "Street 1");
+        Trainee created = service.create(new CreateTraineeRequest(" John ", "Smith", LocalDate.of(1990, 1, 1), "Street 1"));
 
         assertEquals("John.Smith1", created.getUser().getUsername());
         assertEquals("abcde12345", created.getUser().getPassword());
@@ -77,13 +83,13 @@ class TraineeServiceTest {
 
     @Test
     void create_rejectsMissingFirstName() {
-        assertThrows(InvalidRequestException.class, () -> service.create(" ", "Smith", null, null));
+        assertThrows(InvalidRequestException.class, () -> service.create(new CreateTraineeRequest(" ", "Smith", null, null)));
         verifyNoInteractions(traineeDao, usernameGenerator);
     }
 
     @Test
     void create_rejectsMissingLastName() {
-        assertThrows(InvalidRequestException.class, () -> service.create("John", null, null, null));
+        assertThrows(InvalidRequestException.class, () -> service.create(new CreateTraineeRequest("John", null, null, null)));
         verifyNoInteractions(traineeDao, usernameGenerator);
     }
 
@@ -130,7 +136,8 @@ class TraineeServiceTest {
         when(authenticationService.authenticateTrainee(CREDENTIALS)).thenReturn(trainee);
         when(traineeDao.update(trainee)).thenReturn(trainee);
 
-        Trainee updated = service.update(CREDENTIALS, "Johnny", "Smythe", LocalDate.of(1985, 2, 3), "New Street");
+        Trainee updated = service.update(CREDENTIALS,
+                new UpdateTraineeRequest("Johnny", "Smythe", LocalDate.of(1985, 2, 3), "New Street"));
 
         assertEquals("Johnny", updated.getUser().getFirstName());
         assertEquals("Smythe", updated.getUser().getLastName());
@@ -143,7 +150,7 @@ class TraineeServiceTest {
     void update_rejectsMissingLastName_withoutSaving() {
         when(authenticationService.authenticateTrainee(CREDENTIALS)).thenReturn(trainee);
 
-        assertThrows(InvalidRequestException.class, () -> service.update(CREDENTIALS, "Johnny", "", null, null));
+        assertThrows(InvalidRequestException.class, () -> service.update(CREDENTIALS, new UpdateTraineeRequest("Johnny", "", null, null)));
         verify(traineeDao, never()).update(any());
     }
 

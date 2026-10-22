@@ -3,8 +3,11 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.TrainingTypeDao;
 import com.epam.gymcrm.dto.Credentials;
+import com.epam.gymcrm.dto.request.CreateTrainerRequest;
+import com.epam.gymcrm.dto.request.UpdateTrainerRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.exception.InvalidRequestException;
+import com.epam.gymcrm.mapper.TrainerMapper;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
 import com.epam.gymcrm.model.User;
@@ -13,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
@@ -43,6 +47,8 @@ class TrainerServiceTest {
     private UsernameGenerator usernameGenerator;
     @Mock
     private PasswordGenerator passwordGenerator;
+    @Spy
+    private TrainerMapper mapper = new TrainerMapper();
     @Mock
     private TrainingType yoga;
     @Mock
@@ -64,7 +70,7 @@ class TrainerServiceTest {
         when(passwordGenerator.generate()).thenReturn("abcde12345");
         when(trainerDao.save(any(Trainer.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Trainer created = service.create("Anna", "Lee", "Yoga");
+        Trainer created = service.create(new CreateTrainerRequest("Anna", "Lee", "Yoga"));
 
         assertEquals("Anna.Lee", created.getUser().getUsername());
         assertEquals("abcde12345", created.getUser().getPassword());
@@ -74,13 +80,13 @@ class TrainerServiceTest {
 
     @Test
     void create_rejectsMissingFirstName() {
-        assertThrows(InvalidRequestException.class, () -> service.create(null, "Lee", "Yoga"));
+        assertThrows(InvalidRequestException.class, () -> service.create(new CreateTrainerRequest(null, "Lee", "Yoga")));
         verifyNoInteractions(trainerDao);
     }
 
     @Test
     void create_rejectsMissingSpecialization() {
-        assertThrows(InvalidRequestException.class, () -> service.create("Anna", "Lee", " "));
+        assertThrows(InvalidRequestException.class, () -> service.create(new CreateTrainerRequest("Anna", "Lee", " ")));
         verifyNoInteractions(trainerDao);
     }
 
@@ -88,7 +94,7 @@ class TrainerServiceTest {
     void create_rejectsUnknownSpecialization() {
         when(trainingTypeDao.findByName("Chess")).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.create("Anna", "Lee", "Chess"));
+        assertThrows(EntityNotFoundException.class, () -> service.create(new CreateTrainerRequest("Anna", "Lee", "Chess")));
         verifyNoInteractions(trainerDao);
     }
 
@@ -128,7 +134,7 @@ class TrainerServiceTest {
         when(trainingTypeDao.findByName("Zumba")).thenReturn(Optional.of(zumba));
         when(trainerDao.update(trainer)).thenReturn(trainer);
 
-        Trainer updated = service.update(CREDENTIALS, "Annie", "Leigh", "Zumba");
+        Trainer updated = service.update(CREDENTIALS, new UpdateTrainerRequest("Annie", "Leigh", "Zumba"));
 
         assertEquals("Annie", updated.getUser().getFirstName());
         assertEquals("Leigh", updated.getUser().getLastName());
@@ -139,7 +145,7 @@ class TrainerServiceTest {
     void update_rejectsMissingFirstName_withoutSaving() {
         when(authenticationService.authenticateTrainer(CREDENTIALS)).thenReturn(trainer);
 
-        assertThrows(InvalidRequestException.class, () -> service.update(CREDENTIALS, "", "Leigh", "Zumba"));
+        assertThrows(InvalidRequestException.class, () -> service.update(CREDENTIALS, new UpdateTrainerRequest("", "Leigh", "Zumba")));
         verify(trainerDao, never()).update(any());
     }
 

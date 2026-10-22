@@ -3,7 +3,10 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dto.Credentials;
+import com.epam.gymcrm.dto.request.CreateTraineeRequest;
+import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
+import com.epam.gymcrm.mapper.TraineeMapper;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.User;
@@ -12,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -35,27 +37,30 @@ public class TraineeService {
     private final AuthenticationService authenticationService;
     private final UsernameGenerator usernameGenerator;
     private final PasswordGenerator passwordGenerator;
+    private final TraineeMapper mapper;
 
     public TraineeService(TraineeDao traineeDao,
                           TrainerDao trainerDao,
                           AuthenticationService authenticationService,
                           UsernameGenerator usernameGenerator,
-                          PasswordGenerator passwordGenerator) {
+                          PasswordGenerator passwordGenerator,
+                          TraineeMapper mapper) {
         this.traineeDao = traineeDao;
         this.trainerDao = trainerDao;
         this.authenticationService = authenticationService;
         this.usernameGenerator = usernameGenerator;
         this.passwordGenerator = passwordGenerator;
+        this.mapper = mapper;
     }
 
-    public Trainee create(String firstName, String lastName, LocalDate dateOfBirth, String address) {
-        String first = requireText(firstName, "First name");
-        String last = requireText(lastName, "Last name");
+    public Trainee create(CreateTraineeRequest request) {
+        String first = requireText(request.firstName(), "First name");
+        String last = requireText(request.lastName(), "Last name");
         log.info("Creating trainee profile for {} {}", first, last);
 
-        User user = new User(first, last, usernameGenerator.generate(first, last), passwordGenerator.generate());
-        Trainee created = traineeDao.save(new Trainee(user, dateOfBirth, address));
-        log.info("Created trainee profile with username '{}'", user.getUsername());
+        Credentials generated = new Credentials(usernameGenerator.generate(first, last), passwordGenerator.generate());
+        Trainee created = traineeDao.save(mapper.toEntity(request, generated));
+        log.info("Created trainee profile with username '{}'", generated.username());
         return created;
     }
 
@@ -78,13 +83,12 @@ public class TraineeService {
         log.info("Changed password of trainee '{}'", credentials.username());
     }
 
-    public Trainee update(Credentials credentials, String firstName, String lastName,
-                          LocalDate dateOfBirth, String address) {
+    public Trainee update(Credentials credentials, UpdateTraineeRequest request) {
         Trainee trainee = authenticationService.authenticateTrainee(credentials);
-        trainee.getUser().setFirstName(requireText(firstName, "First name"));
-        trainee.getUser().setLastName(requireText(lastName, "Last name"));
-        trainee.setDateOfBirth(dateOfBirth);
-        trainee.setAddress(address);
+        trainee.getUser().setFirstName(requireText(request.firstName(), "First name"));
+        trainee.getUser().setLastName(requireText(request.lastName(), "Last name"));
+        trainee.setDateOfBirth(request.dateOfBirth());
+        trainee.setAddress(request.address());
         log.info("Updated trainee profile '{}'", credentials.username());
         return traineeDao.update(trainee);
     }

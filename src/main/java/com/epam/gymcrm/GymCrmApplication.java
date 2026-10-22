@@ -4,6 +4,8 @@ import com.epam.gymcrm.config.AppConfig;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
+import com.epam.gymcrm.dto.request.CreateTraineeRequest;
+import com.epam.gymcrm.dto.request.CreateTrainerRequest;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
 import com.epam.gymcrm.facade.GymFacade;
 import com.epam.gymcrm.model.Trainee;
@@ -24,8 +26,9 @@ public class GymCrmApplication {
         try (var context = new AnnotationConfigApplicationContext(AppConfig.class)) {
             GymFacade facade = context.getBean(GymFacade.class);
 
-            Trainer trainer = facade.createTrainer("Anna", "Lee", "Yoga");
-            Trainee trainee = facade.createTrainee("John", "Smith", LocalDate.of(1992, 7, 20), "7 River Road");
+            Trainer trainer = facade.createTrainer(new CreateTrainerRequest("Anna", "Lee", "Yoga"));
+            Trainee trainee = facade.createTrainee(
+                    new CreateTraineeRequest("John", "Smith", LocalDate.of(1992, 7, 20), "7 River Road"));
             Credentials trainerCredentials = new Credentials(trainer.getUser().getUsername(), trainer.getUser().getPassword());
             Credentials traineeCredentials = new Credentials(trainee.getUser().getUsername(), trainee.getUser().getPassword());
 

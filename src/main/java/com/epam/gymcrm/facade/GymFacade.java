@@ -4,6 +4,10 @@ import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
+import com.epam.gymcrm.dto.request.CreateTraineeRequest;
+import com.epam.gymcrm.dto.request.CreateTrainerRequest;
+import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
+import com.epam.gymcrm.dto.request.UpdateTrainerRequest;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
@@ -12,7 +16,6 @@ import com.epam.gymcrm.service.TrainerService;
 import com.epam.gymcrm.service.TrainingService;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -32,12 +35,12 @@ public class GymFacade {
 
     // profile creation (no authentication needed)
 
-    public Trainer createTrainer(String firstName, String lastName, String specializationName) {
-        return trainerService.create(firstName, lastName, specializationName);
+    public Trainer createTrainer(CreateTrainerRequest request) {
+        return trainerService.create(request);
     }
 
-    public Trainee createTrainee(String firstName, String lastName, LocalDate dateOfBirth, String address) {
-        return traineeService.create(firstName, lastName, dateOfBirth, address);
+    public Trainee createTrainee(CreateTraineeRequest request) {
+        return traineeService.create(request);
     }
 
     // everything below needs valid credentials and acts on the caller's own profile
@@ -66,13 +69,12 @@ public class GymFacade {
         trainerService.changePassword(credentials, newPassword);
     }
 
-    public Trainer updateTrainer(Credentials credentials, String firstName, String lastName, String specializationName) {
-        return trainerService.update(credentials, firstName, lastName, specializationName);
+    public Trainer updateTrainer(Credentials credentials, UpdateTrainerRequest request) {
+        return trainerService.update(credentials, request);
     }
 
-    public Trainee updateTrainee(Credentials credentials, String firstName, String lastName,
-                                 LocalDate dateOfBirth, String address) {
-        return traineeService.update(credentials, firstName, lastName, dateOfBirth, address);
+    public Trainee updateTrainee(Credentials credentials, UpdateTraineeRequest request) {
+        return traineeService.update(credentials, request);
     }
 
     public boolean toggleTraineeActivation(Credentials credentials) {

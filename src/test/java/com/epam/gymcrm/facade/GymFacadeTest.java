@@ -4,6 +4,10 @@ import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
+import com.epam.gymcrm.dto.request.CreateTraineeRequest;
+import com.epam.gymcrm.dto.request.CreateTrainerRequest;
+import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
+import com.epam.gymcrm.dto.request.UpdateTrainerRequest;
 import com.epam.gymcrm.exception.AccessDeniedException;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
 import com.epam.gymcrm.exception.InvalidRequestException;
@@ -40,8 +44,8 @@ class GymFacadeTest extends PersistenceTest {
 
     @BeforeEach
     void createProfiles() {
-        trainee = facade.createTrainee("John", "Smith", LocalDate.of(1990, 5, 14), "Street 1");
-        trainer = facade.createTrainer("Anna", "Lee", "Yoga");
+        trainee = facade.createTrainee(new CreateTraineeRequest("John", "Smith", LocalDate.of(1990, 5, 14), "Street 1"));
+        trainer = facade.createTrainer(new CreateTrainerRequest("Anna", "Lee", "Yoga"));
         traineeCredentials = new Credentials(trainee.getUser().getUsername(), trainee.getUser().getPassword());
         trainerCredentials = new Credentials(trainer.getUser().getUsername(), trainer.getUser().getPassword());
     }
@@ -61,8 +65,8 @@ class GymFacadeTest extends PersistenceTest {
 
     @Test
     void createProfile_addsSerialNumber_whenNameIsTakenByTraineeOrTrainer() {
-        Trainee second = facade.createTrainee("John", "Smith", null, null);
-        Trainer third = facade.createTrainer("John", "Smith", "Fitness");
+        Trainee second = facade.createTrainee(new CreateTraineeRequest("John", "Smith", null, null));
+        Trainer third = facade.createTrainer(new CreateTrainerRequest("John", "Smith", "Fitness"));
 
         assertEquals("John.Smith1", second.getUser().getUsername());
         assertEquals("John.Smith2", third.getUser().getUsername());
@@ -70,8 +74,8 @@ class GymFacadeTest extends PersistenceTest {
 
     @Test
     void createProfile_validatesRequiredFields() {
-        assertThrows(InvalidRequestException.class, () -> facade.createTrainee("", "Smith", null, null));
-        assertThrows(InvalidRequestException.class, () -> facade.createTrainer("Anna", "Lee", null));
+        assertThrows(InvalidRequestException.class, () -> facade.createTrainee(new CreateTraineeRequest("", "Smith", null, null)));
+        assertThrows(InvalidRequestException.class, () -> facade.createTrainer(new CreateTrainerRequest("Anna", "Lee", null)));
     }
 
     @Test
@@ -109,8 +113,9 @@ class GymFacadeTest extends PersistenceTest {
 
     @Test
     void updateProfiles_storeNewValues() {
-        facade.updateTrainee(traineeCredentials, "Johnny", "Smythe", LocalDate.of(1985, 1, 1), "Other Street");
-        facade.updateTrainer(trainerCredentials, "Annie", "Leigh", "Zumba");
+        facade.updateTrainee(traineeCredentials,
+                new UpdateTraineeRequest("Johnny", "Smythe", LocalDate.of(1985, 1, 1), "Other Street"));
+        facade.updateTrainer(trainerCredentials, new UpdateTrainerRequest("Annie", "Leigh", "Zumba"));
         flushAndClear();
 
         Trainee updatedTrainee = facade.getTraineeProfile(traineeCredentials);
@@ -129,7 +134,7 @@ class GymFacadeTest extends PersistenceTest {
 
     @Test
     void updateTraineeTrainers_changesWhichTrainersAreUnassigned() {
-        Trainer second = facade.createTrainer("Mark", "Taylor", "Fitness");
+        Trainer second = facade.createTrainer(new CreateTrainerRequest("Mark", "Taylor", "Fitness"));
         assertEquals(2, facade.getUnassignedTrainers(traineeCredentials).size());
 
         facade.updateTraineeTrainers(traineeCredentials, Set.of(trainer.getUser().getUsername()));
@@ -162,7 +167,7 @@ class GymFacadeTest extends PersistenceTest {
 
     @Test
     void addTraining_isDenied_forSomeoneWhoDoesNotTakePart() {
-        Trainee stranger = facade.createTrainee("Eve", "Stranger", null, null);
+        Trainee stranger = facade.createTrainee(new CreateTraineeRequest("Eve", "Stranger", null, null));
         Credentials strangerCredentials = new Credentials(stranger.getUser().getUsername(), stranger.getUser().getPassword());
 
         assertThrows(AccessDeniedException.class,

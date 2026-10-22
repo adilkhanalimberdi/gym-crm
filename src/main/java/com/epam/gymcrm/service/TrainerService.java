@@ -3,7 +3,10 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.TrainingTypeDao;
 import com.epam.gymcrm.dto.Credentials;
+import com.epam.gymcrm.dto.request.CreateTrainerRequest;
+import com.epam.gymcrm.dto.request.UpdateTrainerRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
+import com.epam.gymcrm.mapper.TrainerMapper;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
 import com.epam.gymcrm.model.User;
@@ -29,28 +32,31 @@ public class TrainerService {
     private final AuthenticationService authenticationService;
     private final UsernameGenerator usernameGenerator;
     private final PasswordGenerator passwordGenerator;
+    private final TrainerMapper mapper;
 
     public TrainerService(TrainerDao trainerDao,
                           TrainingTypeDao trainingTypeDao,
                           AuthenticationService authenticationService,
                           UsernameGenerator usernameGenerator,
-                          PasswordGenerator passwordGenerator) {
+                          PasswordGenerator passwordGenerator,
+                          TrainerMapper mapper) {
         this.trainerDao = trainerDao;
         this.trainingTypeDao = trainingTypeDao;
         this.authenticationService = authenticationService;
         this.usernameGenerator = usernameGenerator;
         this.passwordGenerator = passwordGenerator;
+        this.mapper = mapper;
     }
 
-    public Trainer create(String firstName, String lastName, String specializationName) {
-        String first = requireText(firstName, "First name");
-        String last = requireText(lastName, "Last name");
-        TrainingType specialization = findTrainingType(specializationName);
+    public Trainer create(CreateTrainerRequest request) {
+        String first = requireText(request.firstName(), "First name");
+        String last = requireText(request.lastName(), "Last name");
+        TrainingType specialization = findTrainingType(request.specializationName());
         log.info("Creating trainer profile for {} {}", first, last);
 
-        User user = new User(first, last, usernameGenerator.generate(first, last), passwordGenerator.generate());
-        Trainer created = trainerDao.save(new Trainer(user, specialization));
-        log.info("Created trainer profile with username '{}'", user.getUsername());
+        Credentials generated = new Credentials(usernameGenerator.generate(first, last), passwordGenerator.generate());
+        Trainer created = trainerDao.save(mapper.toEntity(request, specialization, generated));
+        log.info("Created trainer profile with username '{}'", generated.username());
         return created;
     }
 
@@ -73,11 +79,11 @@ public class TrainerService {
         log.info("Changed password of trainer '{}'", credentials.username());
     }
 
-    public Trainer update(Credentials credentials, String firstName, String lastName, String specializationName) {
+    public Trainer update(Credentials credentials, UpdateTrainerRequest request) {
         Trainer trainer = authenticationService.authenticateTrainer(credentials);
-        trainer.getUser().setFirstName(requireText(firstName, "First name"));
-        trainer.getUser().setLastName(requireText(lastName, "Last name"));
-        trainer.setSpecialization(findTrainingType(specializationName));
+        trainer.getUser().setFirstName(requireText(request.firstName(), "First name"));
+        trainer.getUser().setLastName(requireText(request.lastName(), "Last name"));
+        trainer.setSpecialization(findTrainingType(request.specializationName()));
         log.info("Updated trainer profile '{}'", credentials.username());
         return trainerDao.update(trainer);
     }
