@@ -2,10 +2,20 @@ package com.epam.gymcrm.dao;
 
 import com.epam.gymcrm.model.Trainer;
 
-public interface TrainerDao extends Dao<Trainer> {
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
-    /** Replaces an existing trainer; returns false if no trainer has that id. */
-    boolean update(Trainer trainer);
+public interface TrainerDao {
 
-    boolean existsByUsername(String username);
+    Trainer save(Trainer trainer);
+
+    Trainer update(Trainer trainer);
+
+    Optional<Trainer> findByUsername(String username);
+
+    List<Trainer> findAllByUsernames(Collection<String> usernames);
+
+    /** Trainers that are not in the given trainee's list of assigned trainers. */
+    List<Trainer> findNotAssignedToTrainee(String traineeUsername);
 }

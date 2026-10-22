@@ -3,35 +3,48 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.TrainingDao;
-import com.epam.gymcrm.dto.request.CreateTrainingRequest;
+import com.epam.gymcrm.dao.TrainingTypeDao;
+import com.epam.gymcrm.dto.Credentials;
+import com.epam.gymcrm.dto.NewTraining;
+import com.epam.gymcrm.dto.TraineeTrainingCriteria;
+import com.epam.gymcrm.dto.TrainerTrainingCriteria;
+import com.epam.gymcrm.exception.AccessDeniedException;
+import com.epam.gymcrm.exception.AuthenticationFailedException;
 import com.epam.gymcrm.exception.EntityNotFoundException;
-import com.epam.gymcrm.mapper.TrainingMapper;
+import com.epam.gymcrm.exception.InvalidRequestException;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
 import com.epam.gymcrm.model.TrainingType;
+import com.epam.gymcrm.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TrainingServiceTest {
 
-    private static final LocalDateTime DATE = LocalDateTime.of(2025, 3, 1, 9, 0);
-    private static final Training TRAINING = new Training(1L, 1L, 2L, "Yoga", TrainingType.YOGA, DATE, 60);
+    private static final LocalDate DATE = LocalDate.of(2025, 3, 1);
+    private static final Credentials TRAINEE_CREDENTIALS = new Credentials("John.Smith", "pw1");
+    private static final Credentials TRAINER_CREDENTIALS = new Credentials("Anna.Lee", "pw2");
+    private static final NewTraining REQUEST =
+            new NewTraining("John.Smith", "Anna.Lee", "Morning Yoga", "Yoga", DATE, 60);
 
     @Mock
     private TrainingDao trainingDao;
@@ -40,71 +53,141 @@ class TrainingServiceTest {
     @Mock
     private TrainerDao trainerDao;
     @Mock
-    private Trainee trainee;
+    private TrainingTypeDao trainingTypeDao;
     @Mock
-    private Trainer trainer;
-
+    private AuthenticationService authenticationService;
+    @Mock
+    private TrainingType yoga;
+    @InjectMocks
     private TrainingService service;
+
+    private Trainee trainee;
+    private Trainer trainer;
 
     @BeforeEach
     void setUp() {
-        service = new TrainingService();
-        service.setTrainingDao(trainingDao);
-        service.setTraineeDao(traineeDao);
-        service.setTrainerDao(trainerDao);
-        service.setTrainingMapper(new TrainingMapper());
+        trainee = new Trainee(new User("John", "Smith", "John.Smith", "pw1"), null, null);
+        trainer = new Trainer(new User("Anna", "Lee", "Anna.Lee", "pw2"), yoga);
     }
 
-    private static CreateTrainingRequest request() {
-        return new CreateTrainingRequest(1L, 2L, "Yoga", TrainingType.YOGA, DATE, 60);
-    }
-
-    @Test
-    void create_storesTraining_whenTraineeAndTrainerExist() {
-        when(traineeDao.findById(1L)).thenReturn(Optional.of(trainee));
-        when(trainerDao.findById(2L)).thenReturn(Optional.of(trainer));
-        when(trainingDao.create(any(Training.class))).thenAnswer(inv -> ((Training) inv.getArgument(0)).withId(1L));
-
-        Training created = service.create(request());
-
-        assertEquals(TRAINING, created);
+    private void stubExistingParticipants() {
+        when(traineeDao.findByUsername("John.Smith")).thenReturn(Optional.of(trainee));
+        when(trainerDao.findByUsername("Anna.Lee")).thenReturn(Optional.of(trainer));
     }
 
     @Test
-    void create_throws_whenTraineeMissing() {
-        when(traineeDao.findById(1L)).thenReturn(Optional.empty());
+    void addTraining_savesTraining_whenCalledByTrainee() {
+        stubExistingParticipants();
+        when(trainingTypeDao.findByName("Yoga")).thenReturn(Optional.of(yoga));
+        when(trainingDao.save(any(Training.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        assertThrows(EntityNotFoundException.class, () -> service.create(request()));
-        verify(trainingDao, never()).create(any());
+        Training created = service.addTraining(TRAINEE_CREDENTIALS, REQUEST);
+
+        assertSame(trainee, created.getTrainee());
+        assertSame(trainer, created.getTrainer());
+        assertSame(yoga, created.getTrainingType());
+        assertEquals("Morning Yoga", created.getTrainingName());
+        assertEquals(DATE, created.getTrainingDate());
+        assertEquals(60, created.getDuration());
     }
 
     @Test
-    void create_throws_whenTrainerMissing() {
-        when(traineeDao.findById(1L)).thenReturn(Optional.of(trainee));
-        when(trainerDao.findById(2L)).thenReturn(Optional.empty());
+    void addTraining_savesTraining_whenCalledByTrainer() {
+        stubExistingParticipants();
+        when(trainingTypeDao.findByName("Yoga")).thenReturn(Optional.of(yoga));
+        when(trainingDao.save(any(Training.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        assertThrows(EntityNotFoundException.class, () -> service.create(request()));
-        verify(trainingDao, never()).create(any());
+        Training created = service.addTraining(TRAINER_CREDENTIALS, REQUEST);
+
+        assertEquals("Morning Yoga", created.getTrainingName());
     }
 
     @Test
-    void findById_returnsTraining_whenExists() {
-        when(trainingDao.findById(1L)).thenReturn(Optional.of(TRAINING));
+    void addTraining_isDenied_whenCallerTakesNoPartInTheTraining() {
+        stubExistingParticipants();
 
-        assertEquals(TRAINING, service.findById(1L));
+        assertThrows(AccessDeniedException.class,
+                () -> service.addTraining(new Credentials("Eve.Stranger", "pw"), REQUEST));
+        verify(trainingDao, never()).save(any());
     }
 
     @Test
-    void findById_throws_whenMissing() {
-        when(trainingDao.findById(1L)).thenReturn(Optional.empty());
+    void addTraining_failsWhenAuthenticationFails() {
+        when(authenticationService.authenticate(TRAINEE_CREDENTIALS)).thenThrow(new AuthenticationFailedException());
 
-        assertThrows(EntityNotFoundException.class, () -> service.findById(1L));
+        assertThrows(AuthenticationFailedException.class, () -> service.addTraining(TRAINEE_CREDENTIALS, REQUEST));
+        verifyNoInteractions(trainingDao, traineeDao);
     }
 
     @Test
-    void findAll_returnsAllTrainings() {
-        when(trainingDao.findAll()).thenReturn(List.of(TRAINING));
+    void addTraining_failsForUnknownTrainee() {
+        when(traineeDao.findByUsername("John.Smith")).thenReturn(Optional.empty());
 
-        assertEquals(List.of(TRAINING), service.findAll());
+        assertThrows(EntityNotFoundException.class, () -> service.addTraining(TRAINEE_CREDENTIALS, REQUEST));
+    }
+
+    @Test
+    void addTraining_failsForUnknownTrainer() {
+        when(traineeDao.findByUsername("John.Smith")).thenReturn(Optional.of(trainee));
+        when(trainerDao.findByUsername("Anna.Lee")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> service.addTraining(TRAINEE_CREDENTIALS, REQUEST));
+    }
+
+    @Test
+    void addTraining_failsForUnknownTrainingType() {
+        stubExistingParticipants();
+        when(trainingTypeDao.findByName("Yoga")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> service.addTraining(TRAINEE_CREDENTIALS, REQUEST));
+        verify(trainingDao, never()).save(any());
+    }
+
+    @Test
+    void addTraining_validatesRequiredFieldsBeforeTouchingTheDatabase() {
+        assertThrows(InvalidRequestException.class, () -> service.addTraining(TRAINEE_CREDENTIALS,
+                new NewTraining("John.Smith", "Anna.Lee", " ", "Yoga", DATE, 60)));
+        assertThrows(InvalidRequestException.class, () -> service.addTraining(TRAINEE_CREDENTIALS,
+                new NewTraining("John.Smith", "Anna.Lee", "Name", "Yoga", null, 60)));
+        assertThrows(InvalidRequestException.class, () -> service.addTraining(TRAINEE_CREDENTIALS,
+                new NewTraining("John.Smith", "Anna.Lee", "Name", "Yoga", DATE, 0)));
+
+        verifyNoInteractions(authenticationService, traineeDao, trainerDao, trainingDao);
+    }
+
+    @Test
+    void getTraineeTrainings_returnsTrainingsFromDao() {
+        var criteria = new TraineeTrainingCriteria(DATE, DATE.plusDays(5), "Anna", "Yoga");
+        List<Training> trainings = List.of(new Training(trainee, trainer, "Yoga", yoga, DATE, 60));
+        when(trainingDao.findByTrainee("John.Smith", criteria)).thenReturn(trainings);
+
+        assertEquals(trainings, service.getTraineeTrainings(TRAINEE_CREDENTIALS, criteria));
+        verify(authenticationService).authenticateTrainee(TRAINEE_CREDENTIALS);
+    }
+
+    @Test
+    void getTraineeTrainings_rejectsInvertedDateRange() {
+        var criteria = new TraineeTrainingCriteria(DATE.plusDays(1), DATE, null, null);
+
+        assertThrows(InvalidRequestException.class, () -> service.getTraineeTrainings(TRAINEE_CREDENTIALS, criteria));
+        verifyNoInteractions(trainingDao);
+    }
+
+    @Test
+    void getTrainerTrainings_returnsTrainingsFromDao() {
+        var criteria = new TrainerTrainingCriteria(null, null, "John");
+        List<Training> trainings = List.of(new Training(trainee, trainer, "Yoga", yoga, DATE, 60));
+        when(trainingDao.findByTrainer("Anna.Lee", criteria)).thenReturn(trainings);
+
+        assertEquals(trainings, service.getTrainerTrainings(TRAINER_CREDENTIALS, criteria));
+        verify(authenticationService).authenticateTrainer(TRAINER_CREDENTIALS);
+    }
+
+    @Test
+    void getTrainerTrainings_rejectsInvertedDateRange() {
+        var criteria = new TrainerTrainingCriteria(DATE.plusDays(1), DATE, null);
+
+        assertThrows(InvalidRequestException.class, () -> service.getTrainerTrainings(TRAINER_CREDENTIALS, criteria));
+        verifyNoInteractions(trainingDao);
     }
 }
