@@ -43,11 +43,6 @@ public class User {
         this.active = true;
     }
 
-    /** Activates an inactive user and deactivates an active one. */
-    public void toggleActive() {
-        active = !active;
-    }
-
     public Long getId() {
         return id;
     }
@@ -82,6 +77,10 @@ public class User {
 
     public boolean isActive() {
         return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     /** The password is deliberately left out so it can never leak into logs. */

@@ -6,6 +6,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -15,11 +16,14 @@ public class JpaTrainingTypeDao implements TrainingTypeDao {
     private EntityManager entityManager;
 
     @Override
-    public Optional<TrainingType> findByName(String name) {
+    public Optional<TrainingType> findById(Long id) {
+        return Optional.ofNullable(entityManager.find(TrainingType.class, id));
+    }
+
+    @Override
+    public List<TrainingType> findAll() {
         return entityManager
-                .createQuery("select t from TrainingType t where t.name = :name", TrainingType.class)
-                .setParameter("name", name)
-                .getResultStream()
-                .findFirst();
+                .createQuery("select t from TrainingType t order by t.id", TrainingType.class)
+                .getResultList();
     }
 }

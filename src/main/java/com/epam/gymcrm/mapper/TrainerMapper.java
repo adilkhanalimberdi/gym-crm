@@ -12,7 +12,7 @@ public class TrainerMapper {
 
     /**
      * Builds a new trainer and its user. The specialization is looked up by the service
-     * (the request only has its name); the generated username and password come in as credentials.
+     * (the request only has its id); the generated username and password come in as credentials.
      */
     public Trainer toEntity(CreateTrainerRequest request, TrainingType specialization, Credentials generated) {
         User user = new User(

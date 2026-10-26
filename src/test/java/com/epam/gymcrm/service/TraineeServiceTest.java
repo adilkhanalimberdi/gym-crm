@@ -94,13 +94,6 @@ class TraineeServiceTest {
     }
 
     @Test
-    void credentialsMatch_delegatesToAuthentication() {
-        when(authenticationService.matchesTrainee(CREDENTIALS)).thenReturn(true);
-
-        assertTrue(service.credentialsMatch(CREDENTIALS));
-    }
-
-    @Test
     void getProfile_returnsAuthenticatedTrainee() {
         when(authenticationService.authenticateTrainee(CREDENTIALS)).thenReturn(trainee);
 
@@ -115,30 +108,14 @@ class TraineeServiceTest {
     }
 
     @Test
-    void changePassword_storesNewPassword() {
-        when(authenticationService.authenticateTrainee(CREDENTIALS)).thenReturn(trainee);
-
-        service.changePassword(CREDENTIALS, "newSecret");
-
-        assertEquals("newSecret", trainee.getUser().getPassword());
-    }
-
-    @Test
-    void changePassword_rejectsBlankPassword() {
-        when(authenticationService.authenticateTrainee(CREDENTIALS)).thenReturn(trainee);
-
-        assertThrows(InvalidRequestException.class, () -> service.changePassword(CREDENTIALS, " "));
-        assertEquals("secret", trainee.getUser().getPassword());
-    }
-
-    @Test
     void update_changesProfileFieldsAndKeepsUsername() {
         when(authenticationService.authenticateTrainee(CREDENTIALS)).thenReturn(trainee);
         when(traineeDao.update(trainee)).thenReturn(trainee);
 
         Trainee updated = service.update(CREDENTIALS,
-                new UpdateTraineeRequest("Johnny", "Smythe", LocalDate.of(1985, 2, 3), "New Street"));
+                new UpdateTraineeRequest("Johnny", "Smythe", LocalDate.of(1985, 2, 3), "New Street", false));
 
+        assertFalse(updated.getUser().isActive());
         assertEquals("Johnny", updated.getUser().getFirstName());
         assertEquals("Smythe", updated.getUser().getLastName());
         assertEquals(LocalDate.of(1985, 2, 3), updated.getDateOfBirth());
@@ -150,16 +127,8 @@ class TraineeServiceTest {
     void update_rejectsMissingLastName_withoutSaving() {
         when(authenticationService.authenticateTrainee(CREDENTIALS)).thenReturn(trainee);
 
-        assertThrows(InvalidRequestException.class, () -> service.update(CREDENTIALS, new UpdateTraineeRequest("Johnny", "", null, null)));
+        assertThrows(InvalidRequestException.class, () -> service.update(CREDENTIALS, new UpdateTraineeRequest("Johnny", "", null, null, true)));
         verify(traineeDao, never()).update(any());
-    }
-
-    @Test
-    void toggleActivation_flipsStateEachTime() {
-        when(authenticationService.authenticateTrainee(CREDENTIALS)).thenReturn(trainee);
-
-        assertFalse(service.toggleActivation(CREDENTIALS));
-        assertTrue(service.toggleActivation(CREDENTIALS));
     }
 
     @Test

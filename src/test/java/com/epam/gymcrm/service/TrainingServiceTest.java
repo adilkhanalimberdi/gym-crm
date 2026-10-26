@@ -3,7 +3,6 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.TrainingDao;
-import com.epam.gymcrm.dao.TrainingTypeDao;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
@@ -44,7 +43,7 @@ class TrainingServiceTest {
     private static final Credentials TRAINEE_CREDENTIALS = new Credentials("John.Smith", "pw1");
     private static final Credentials TRAINER_CREDENTIALS = new Credentials("Anna.Lee", "pw2");
     private static final NewTraining REQUEST =
-            new NewTraining("John.Smith", "Anna.Lee", "Morning Yoga", "Yoga", DATE, 60);
+            new NewTraining("John.Smith", "Anna.Lee", "Morning Yoga", DATE, 60);
 
     @Mock
     private TrainingDao trainingDao;
@@ -52,8 +51,6 @@ class TrainingServiceTest {
     private TraineeDao traineeDao;
     @Mock
     private TrainerDao trainerDao;
-    @Mock
-    private TrainingTypeDao trainingTypeDao;
     @Mock
     private AuthenticationService authenticationService;
     @Mock
@@ -76,9 +73,8 @@ class TrainingServiceTest {
     }
 
     @Test
-    void addTraining_savesTraining_whenCalledByTrainee() {
+    void addTraining_savesTrainingOfTrainerSpecialization_whenCalledByTrainee() {
         stubExistingParticipants();
-        when(trainingTypeDao.findByName("Yoga")).thenReturn(Optional.of(yoga));
         when(trainingDao.save(any(Training.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Training created = service.addTraining(TRAINEE_CREDENTIALS, REQUEST);
@@ -94,7 +90,6 @@ class TrainingServiceTest {
     @Test
     void addTraining_savesTraining_whenCalledByTrainer() {
         stubExistingParticipants();
-        when(trainingTypeDao.findByName("Yoga")).thenReturn(Optional.of(yoga));
         when(trainingDao.save(any(Training.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Training created = service.addTraining(TRAINER_CREDENTIALS, REQUEST);
@@ -135,22 +130,13 @@ class TrainingServiceTest {
     }
 
     @Test
-    void addTraining_failsForUnknownTrainingType() {
-        stubExistingParticipants();
-        when(trainingTypeDao.findByName("Yoga")).thenReturn(Optional.empty());
-
-        assertThrows(EntityNotFoundException.class, () -> service.addTraining(TRAINEE_CREDENTIALS, REQUEST));
-        verify(trainingDao, never()).save(any());
-    }
-
-    @Test
     void addTraining_validatesRequiredFieldsBeforeTouchingTheDatabase() {
         assertThrows(InvalidRequestException.class, () -> service.addTraining(TRAINEE_CREDENTIALS,
-                new NewTraining("John.Smith", "Anna.Lee", " ", "Yoga", DATE, 60)));
+                new NewTraining("John.Smith", "Anna.Lee", " ", DATE, 60)));
         assertThrows(InvalidRequestException.class, () -> service.addTraining(TRAINEE_CREDENTIALS,
-                new NewTraining("John.Smith", "Anna.Lee", "Name", "Yoga", null, 60)));
+                new NewTraining("John.Smith", "Anna.Lee", "Name", null, 60)));
         assertThrows(InvalidRequestException.class, () -> service.addTraining(TRAINEE_CREDENTIALS,
-                new NewTraining("John.Smith", "Anna.Lee", "Name", "Yoga", DATE, 0)));
+                new NewTraining("John.Smith", "Anna.Lee", "Name", DATE, 0)));
 
         verifyNoInteractions(authenticationService, traineeDao, trainerDao, trainingDao);
     }

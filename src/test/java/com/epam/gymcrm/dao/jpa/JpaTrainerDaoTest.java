@@ -84,6 +84,18 @@ class JpaTrainerDaoTest extends PersistenceTest {
     }
 
     @Test
+    void findNotAssignedToTrainee_excludesInactiveTrainers() {
+        persistTrainee("John", "Smith");
+        persistTrainer("Anna", "Lee", "Yoga");
+        persistTrainer("Mark", "Taylor", "Fitness").getUser().setActive(false);
+        flushAndClear();
+
+        List<Trainer> notAssigned = trainerDao.findNotAssignedToTrainee("John.Smith");
+
+        assertEquals(List.of("Anna.Lee"), notAssigned.stream().map(t -> t.getUser().getUsername()).toList());
+    }
+
+    @Test
     void findNotAssignedToTrainee_returnsAllTrainers_whenNothingAssigned() {
         persistTrainee("John", "Smith");
         persistTrainer("Anna", "Lee", "Yoga");
