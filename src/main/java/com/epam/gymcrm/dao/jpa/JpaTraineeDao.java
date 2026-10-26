@@ -32,10 +32,12 @@ public class JpaTraineeDao implements TraineeDao {
         entityManager.remove(entityManager.contains(trainee) ? trainee : entityManager.merge(trainee));
     }
 
+    /** Loads the assigned trainers together with the trainee, so callers can read them after the transaction. */
     @Override
     public Optional<Trainee> findByUsername(String username) {
         return entityManager
-                .createQuery("select t from Trainee t where t.user.username = :username", Trainee.class)
+                .createQuery("select t from Trainee t left join fetch t.trainers where t.user.username = :username",
+                        Trainee.class)
                 .setParameter("username", username)
                 .getResultStream()
                 .findFirst();
