@@ -9,7 +9,6 @@ import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.mapper.TraineeMapper;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
-import com.epam.gymcrm.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -65,40 +64,21 @@ public class TraineeService {
     }
 
     @Transactional(readOnly = true)
-    public boolean credentialsMatch(Credentials credentials) {
-        log.debug("Checking trainee credentials for '{}'", credentials.username());
-        return authenticationService.matchesTrainee(credentials);
-    }
-
-    @Transactional(readOnly = true)
     public Trainee getProfile(Credentials credentials) {
         Trainee trainee = authenticationService.authenticateTrainee(credentials);
         log.debug("Selected trainee profile '{}'", credentials.username());
         return trainee;
     }
 
-    public void changePassword(Credentials credentials, String newPassword) {
-        Trainee trainee = authenticationService.authenticateTrainee(credentials);
-        trainee.getUser().setPassword(requireText(newPassword, "New password"));
-        log.info("Changed password of trainee '{}'", credentials.username());
-    }
-
     public Trainee update(Credentials credentials, UpdateTraineeRequest request) {
         Trainee trainee = authenticationService.authenticateTrainee(credentials);
         trainee.getUser().setFirstName(requireText(request.firstName(), "First name"));
         trainee.getUser().setLastName(requireText(request.lastName(), "Last name"));
+        trainee.getUser().setActive(request.active());
         trainee.setDateOfBirth(request.dateOfBirth());
         trainee.setAddress(request.address());
         log.info("Updated trainee profile '{}'", credentials.username());
         return traineeDao.update(trainee);
-    }
-
-    /** Not idempotent: an active trainee becomes inactive and the other way round. Returns the new state. */
-    public boolean toggleActivation(Credentials credentials) {
-        User user = authenticationService.authenticateTrainee(credentials).getUser();
-        user.toggleActive();
-        log.info("Trainee '{}' is now {}", credentials.username(), user.isActive() ? "active" : "inactive");
-        return user.isActive();
     }
 
     /** Hard delete; the user record and all trainings of the trainee are removed with it. */

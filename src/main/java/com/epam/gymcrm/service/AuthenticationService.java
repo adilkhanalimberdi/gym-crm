@@ -46,14 +46,6 @@ public class AuthenticationService {
         return orElseFail(findTrainer(credentials), credentials);
     }
 
-    public boolean matchesTrainee(Credentials credentials) {
-        return findTrainee(credentials).isPresent();
-    }
-
-    public boolean matchesTrainer(Credentials credentials) {
-        return findTrainer(credentials).isPresent();
-    }
-
     private Optional<User> findUser(Credentials credentials) {
         return userDao.findByUsername(credentials.username())
                 .filter(user -> passwordMatches(user, credentials));

@@ -17,10 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -99,22 +97,5 @@ class AuthenticationServiceTest {
         when(trainerDao.findByUsername("John.Smith")).thenReturn(Optional.of(trainer));
 
         assertThrows(AuthenticationFailedException.class, () -> service.authenticateTrainer(WRONG_PASSWORD));
-    }
-
-    @Test
-    void matchesTrainee_reportsWhetherCredentialsAreValid() {
-        when(traineeDao.findByUsername("John.Smith")).thenReturn(Optional.of(new Trainee(user, null, null)));
-
-        assertTrue(service.matchesTrainee(VALID));
-        assertFalse(service.matchesTrainee(WRONG_PASSWORD));
-    }
-
-    @Test
-    void matchesTrainer_reportsWhetherCredentialsAreValid() {
-        when(trainerDao.findByUsername("John.Smith"))
-                .thenReturn(Optional.of(new Trainer(user, mock(TrainingType.class))));
-
-        assertTrue(service.matchesTrainer(VALID));
-        assertFalse(service.matchesTrainer(WRONG_PASSWORD));
     }
 }

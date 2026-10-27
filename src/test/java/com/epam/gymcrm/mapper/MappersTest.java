@@ -44,7 +44,7 @@ class MappersTest {
 
     @Test
     void trainerMapper_buildsActiveTrainerWithGivenSpecialization() {
-        var request = new CreateTrainerRequest("Anna", "Lee", "Yoga");
+        var request = new CreateTrainerRequest("Anna", "Lee", 2L);
 
         Trainer trainer = new TrainerMapper().toEntity(request, yoga, new Credentials("Anna.Lee", "pw"));
 

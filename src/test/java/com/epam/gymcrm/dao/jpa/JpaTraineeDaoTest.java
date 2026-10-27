@@ -53,6 +53,20 @@ class JpaTraineeDaoTest extends PersistenceTest {
     }
 
     @Test
+    void findAllByTrainer_returnsOnlyTraineesAssignedToThatTrainer() {
+        Trainer anna = persistTrainer("Anna", "Lee", "Yoga");
+        Trainer mark = persistTrainer("Mark", "Taylor", "Fitness");
+        persistTrainee("John", "Smith").replaceTrainers(List.of(anna));
+        persistTrainee("Kate", "Brown").replaceTrainers(List.of(anna, mark));
+        persistTrainee("Paul", "White").replaceTrainers(List.of(mark));
+        flushAndClear();
+
+        List<Trainee> found = traineeDao.findAllByTrainer("Anna.Lee");
+
+        assertEquals(List.of("John.Smith", "Kate.Brown"), found.stream().map(t -> t.getUser().getUsername()).toList());
+    }
+
+    @Test
     void delete_removesUserAndTrainingsButKeepsTrainers() {
         Trainee trainee = persistTrainee("John", "Smith");
         Trainer trainer = persistTrainer("Anna", "Lee", "Yoga");

@@ -3,7 +3,6 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.TrainingDao;
-import com.epam.gymcrm.dao.TrainingTypeDao;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
@@ -14,7 +13,6 @@ import com.epam.gymcrm.exception.InvalidRequestException;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
-import com.epam.gymcrm.model.TrainingType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -37,18 +35,15 @@ public class TrainingService {
     private final TrainingDao trainingDao;
     private final TraineeDao traineeDao;
     private final TrainerDao trainerDao;
-    private final TrainingTypeDao trainingTypeDao;
     private final AuthenticationService authenticationService;
 
     public TrainingService(TrainingDao trainingDao,
                            TraineeDao traineeDao,
                            TrainerDao trainerDao,
-                           TrainingTypeDao trainingTypeDao,
                            AuthenticationService authenticationService) {
         this.trainingDao = trainingDao;
         this.traineeDao = traineeDao;
         this.trainerDao = trainerDao;
-        this.trainingTypeDao = trainingTypeDao;
         this.authenticationService = authenticationService;
     }
 
@@ -64,10 +59,9 @@ public class TrainingService {
         Trainer trainer = trainerDao.findByUsername(requireText(request.trainerUsername(), "Trainer username"))
                 .orElseThrow(() -> new EntityNotFoundException("Trainer", request.trainerUsername()));
         checkParticipant(credentials, trainee, trainer);
-        TrainingType type = trainingTypeDao.findByName(requireText(request.trainingTypeName(), "Training type"))
-                .orElseThrow(() -> new EntityNotFoundException("Training type", request.trainingTypeName()));
 
-        Training created = trainingDao.save(new Training(trainee, trainer, trainingName, type, trainingDate, duration));
+        Training created = trainingDao.save(
+                new Training(trainee, trainer, trainingName, trainer.getSpecialization(), trainingDate, duration));
         log.info("Added training '{}' for trainee '{}' with trainer '{}'",
                 trainingName, request.traineeUsername(), request.trainerUsername());
         return created;

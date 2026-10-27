@@ -6,5 +6,6 @@ public record UpdateTraineeRequest(
         String firstName,
         String lastName,
         LocalDate dateOfBirth,
-        String address
+        String address,
+        boolean active
 ) {}
