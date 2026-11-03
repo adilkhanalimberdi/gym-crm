@@ -5,8 +5,8 @@ import com.epam.gymcrm.dao.TrainingTypeDao;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.request.CreateTrainerRequest;
 import com.epam.gymcrm.dto.request.UpdateTrainerRequest;
-import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.exception.InvalidRequestException;
+import com.epam.gymcrm.exception.ResourceNotFoundException;
 import com.epam.gymcrm.mapper.TrainerMapper;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
@@ -94,7 +94,7 @@ class TrainerServiceTest {
     void create_rejectsUnknownSpecialization() {
         when(trainingTypeDao.findByName("Chess")).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.create(new CreateTrainerRequest("Anna", "Lee", "Chess")));
+        assertThrows(ResourceNotFoundException.class, () -> service.create(new CreateTrainerRequest("Anna", "Lee", "Chess")));
         verifyNoInteractions(trainerDao);
     }
 

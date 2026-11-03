@@ -8,10 +8,10 @@ import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
-import com.epam.gymcrm.exception.AccessDeniedException;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
-import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.exception.InvalidRequestException;
+import com.epam.gymcrm.exception.OperationNotAllowedException;
+import com.epam.gymcrm.exception.ResourceNotFoundException;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
@@ -106,7 +106,7 @@ class TrainingServiceTest {
     void addTraining_isDenied_whenCallerTakesNoPartInTheTraining() {
         stubExistingParticipants();
 
-        assertThrows(AccessDeniedException.class,
+        assertThrows(OperationNotAllowedException.class,
                 () -> service.addTraining(new Credentials("Eve.Stranger", "pw"), REQUEST));
         verify(trainingDao, never()).save(any());
     }
@@ -123,7 +123,7 @@ class TrainingServiceTest {
     void addTraining_failsForUnknownTrainee() {
         when(traineeDao.findByUsername("John.Smith")).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.addTraining(TRAINEE_CREDENTIALS, REQUEST));
+        assertThrows(ResourceNotFoundException.class, () -> service.addTraining(TRAINEE_CREDENTIALS, REQUEST));
     }
 
     @Test
@@ -131,7 +131,7 @@ class TrainingServiceTest {
         when(traineeDao.findByUsername("John.Smith")).thenReturn(Optional.of(trainee));
         when(trainerDao.findByUsername("Anna.Lee")).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.addTraining(TRAINEE_CREDENTIALS, REQUEST));
+        assertThrows(ResourceNotFoundException.class, () -> service.addTraining(TRAINEE_CREDENTIALS, REQUEST));
     }
 
     @Test
@@ -139,7 +139,7 @@ class TrainingServiceTest {
         stubExistingParticipants();
         when(trainingTypeDao.findByName("Yoga")).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.addTraining(TRAINEE_CREDENTIALS, REQUEST));
+        assertThrows(ResourceNotFoundException.class, () -> service.addTraining(TRAINEE_CREDENTIALS, REQUEST));
         verify(trainingDao, never()).save(any());
     }
 

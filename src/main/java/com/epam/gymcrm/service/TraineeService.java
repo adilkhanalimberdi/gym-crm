@@ -5,7 +5,7 @@ import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.request.CreateTraineeRequest;
 import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
-import com.epam.gymcrm.exception.EntityNotFoundException;
+import com.epam.gymcrm.exception.ResourceNotFoundException;
 import com.epam.gymcrm.mapper.TraineeMapper;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
@@ -125,7 +125,7 @@ public class TraineeService {
         requested.removeAll(trainers.stream().map(trainer -> trainer.getUser().getUsername()).toList());
         if (!requested.isEmpty()) {
             log.warn("Cannot update trainers of '{}': unknown trainers {}", credentials.username(), requested);
-            throw new EntityNotFoundException("Trainer", String.join(", ", requested));
+            throw new ResourceNotFoundException("Trainer", String.join(", ", requested));
         }
 
         trainee.replaceTrainers(trainers);

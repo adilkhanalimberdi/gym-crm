@@ -5,7 +5,7 @@ import com.epam.gymcrm.dao.TrainingTypeDao;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.request.CreateTrainerRequest;
 import com.epam.gymcrm.dto.request.UpdateTrainerRequest;
-import com.epam.gymcrm.exception.EntityNotFoundException;
+import com.epam.gymcrm.exception.ResourceNotFoundException;
 import com.epam.gymcrm.mapper.TrainerMapper;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
@@ -100,7 +100,7 @@ public class TrainerService {
         String typeName = requireText(name, "Specialization");
         return trainingTypeDao.findByName(typeName).orElseThrow(() -> {
             log.warn("Unknown training type '{}'", typeName);
-            return new EntityNotFoundException("Training type", typeName);
+            return new ResourceNotFoundException("Training type", typeName);
         });
     }
 }

@@ -8,9 +8,9 @@ import com.epam.gymcrm.dto.request.CreateTraineeRequest;
 import com.epam.gymcrm.dto.request.CreateTrainerRequest;
 import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
 import com.epam.gymcrm.dto.request.UpdateTrainerRequest;
-import com.epam.gymcrm.exception.AccessDeniedException;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
 import com.epam.gymcrm.exception.InvalidRequestException;
+import com.epam.gymcrm.exception.OperationNotAllowedException;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
@@ -170,7 +170,7 @@ class GymFacadeTest extends PersistenceTest {
         Trainee stranger = facade.createTrainee(new CreateTraineeRequest("Eve", "Stranger", null, null));
         Credentials strangerCredentials = new Credentials(stranger.getUser().getUsername(), stranger.getUser().getPassword());
 
-        assertThrows(AccessDeniedException.class,
+        assertThrows(OperationNotAllowedException.class,
                 () -> facade.addTraining(strangerCredentials, newTraining("Sneaky", DATE)));
     }
 

@@ -8,9 +8,9 @@ import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
-import com.epam.gymcrm.exception.AccessDeniedException;
-import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.exception.InvalidRequestException;
+import com.epam.gymcrm.exception.OperationNotAllowedException;
+import com.epam.gymcrm.exception.ResourceNotFoundException;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
@@ -60,12 +60,12 @@ public class TrainingService {
 
         authenticationService.authenticate(credentials);
         Trainee trainee = traineeDao.findByUsername(requireText(request.traineeUsername(), "Trainee username"))
-                .orElseThrow(() -> new EntityNotFoundException("Trainee", request.traineeUsername()));
+                .orElseThrow(() -> new ResourceNotFoundException("Trainee", request.traineeUsername()));
         Trainer trainer = trainerDao.findByUsername(requireText(request.trainerUsername(), "Trainer username"))
-                .orElseThrow(() -> new EntityNotFoundException("Trainer", request.trainerUsername()));
+                .orElseThrow(() -> new ResourceNotFoundException("Trainer", request.trainerUsername()));
         checkParticipant(credentials, trainee, trainer);
         TrainingType type = trainingTypeDao.findByName(requireText(request.trainingTypeName(), "Training type"))
-                .orElseThrow(() -> new EntityNotFoundException("Training type", request.trainingTypeName()));
+                .orElseThrow(() -> new ResourceNotFoundException("Training type", request.trainingTypeName()));
 
         Training created = trainingDao.save(new Training(trainee, trainer, trainingName, type, trainingDate, duration));
         log.info("Added training '{}' for trainee '{}' with trainer '{}'",
@@ -95,7 +95,7 @@ public class TrainingService {
         String caller = credentials.username();
         if (!caller.equals(trainee.getUser().getUsername()) && !caller.equals(trainer.getUser().getUsername())) {
             log.warn("User '{}' tried to add a training they do not take part in", caller);
-            throw new AccessDeniedException("Only the trainee or the trainer can add this training");
+            throw new OperationNotAllowedException("Only the trainee or the trainer can add this training");
         }
     }
 

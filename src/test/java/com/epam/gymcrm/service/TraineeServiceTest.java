@@ -6,8 +6,8 @@ import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.request.CreateTraineeRequest;
 import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
-import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.exception.InvalidRequestException;
+import com.epam.gymcrm.exception.ResourceNotFoundException;
 import com.epam.gymcrm.mapper.TraineeMapper;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
@@ -210,7 +210,7 @@ class TraineeServiceTest {
         when(authenticationService.authenticateTrainee(CREDENTIALS)).thenReturn(trainee);
         when(trainerDao.findAllByUsernames(any())).thenReturn(List.of());
 
-        assertThrows(EntityNotFoundException.class, () -> service.updateTrainers(CREDENTIALS, List.of("Ghost.Trainer")));
+        assertThrows(ResourceNotFoundException.class, () -> service.updateTrainers(CREDENTIALS, List.of("Ghost.Trainer")));
         assertTrue(trainee.getTrainers().contains(mark));
         verify(traineeDao, never()).update(any());
     }
