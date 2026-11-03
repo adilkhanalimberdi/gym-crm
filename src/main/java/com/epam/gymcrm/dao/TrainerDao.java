@@ -16,6 +16,6 @@ public interface TrainerDao {
 
     List<Trainer> findAllByUsernames(Collection<String> usernames);
 
-    /** Trainers that are not in the given trainee's list of assigned trainers. */
+    /** Active trainers that are not in the given trainee's list of assigned trainers. */
     List<Trainer> findNotAssignedToTrainee(String traineeUsername);
 }

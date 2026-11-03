@@ -52,7 +52,8 @@ public class JpaTrainerDao implements TrainerDao {
         return entityManager
                 .createQuery("""
                         select t from Trainer t
-                        where t not in (select assigned from Trainee te join te.trainers assigned
+                        where t.user.active = true
+                          and t not in (select assigned from Trainee te join te.trainers assigned
                                         where te.user.username = :username)
                         order by t.user.username
                         """, Trainer.class)

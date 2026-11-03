@@ -9,15 +9,22 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "trainers")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Trainer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Setter
     @ManyToOne(optional = false)
     @JoinColumn(name = "specialization_id", nullable = false)
     private TrainingType specialization;
@@ -26,28 +33,8 @@ public class Trainer {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    protected Trainer() {
-        // required by JPA
-    }
-
     public Trainer(User user, TrainingType specialization) {
         this.user = user;
-        this.specialization = specialization;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public TrainingType getSpecialization() {
-        return specialization;
-    }
-
-    public void setSpecialization(TrainingType specialization) {
         this.specialization = specialization;
     }
 

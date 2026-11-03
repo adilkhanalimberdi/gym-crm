@@ -6,6 +6,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -31,12 +32,26 @@ public class JpaTraineeDao implements TraineeDao {
         entityManager.remove(entityManager.contains(trainee) ? trainee : entityManager.merge(trainee));
     }
 
+    /** Loads the assigned trainers together with the trainee, so callers can read them after the transaction. */
     @Override
     public Optional<Trainee> findByUsername(String username) {
         return entityManager
-                .createQuery("select t from Trainee t where t.user.username = :username", Trainee.class)
+                .createQuery("select t from Trainee t left join fetch t.trainers where t.user.username = :username",
+                        Trainee.class)
                 .setParameter("username", username)
                 .getResultStream()
                 .findFirst();
+    }
+
+    @Override
+    public List<Trainee> findAllByTrainer(String trainerUsername) {
+        return entityManager
+                .createQuery("""
+                        select te from Trainee te join te.trainers tr
+                        where tr.user.username = :username
+                        order by te.user.username
+                        """, Trainee.class)
+                .setParameter("username", trainerUsername)
+                .getResultList();
     }
 }

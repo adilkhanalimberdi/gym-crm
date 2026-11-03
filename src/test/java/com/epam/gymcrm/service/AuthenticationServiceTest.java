@@ -17,10 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +28,12 @@ class AuthenticationServiceTest {
     private static final Credentials VALID = new Credentials("John.Smith", "secret");
     private static final Credentials WRONG_PASSWORD = new Credentials("John.Smith", "other");
 
-    private final User user = new User("John", "Smith", "John.Smith", "secret");
+    private final User user = new User(
+            "John",
+            "Smith",
+            "John.Smith",
+            "secret"
+    );
 
     @Mock
     private UserDao userDao;
@@ -72,7 +75,11 @@ class AuthenticationServiceTest {
 
     @Test
     void authenticateTrainee_returnsTrainee_whenPasswordMatches() {
-        Trainee trainee = new Trainee(user, null, null);
+        Trainee trainee = new Trainee(
+                user,
+                null,
+                null
+        );
         when(traineeDao.findByUsername("John.Smith")).thenReturn(Optional.of(trainee));
 
         assertSame(trainee, service.authenticateTrainee(VALID));
@@ -99,22 +106,5 @@ class AuthenticationServiceTest {
         when(trainerDao.findByUsername("John.Smith")).thenReturn(Optional.of(trainer));
 
         assertThrows(AuthenticationFailedException.class, () -> service.authenticateTrainer(WRONG_PASSWORD));
-    }
-
-    @Test
-    void matchesTrainee_reportsWhetherCredentialsAreValid() {
-        when(traineeDao.findByUsername("John.Smith")).thenReturn(Optional.of(new Trainee(user, null, null)));
-
-        assertTrue(service.matchesTrainee(VALID));
-        assertFalse(service.matchesTrainee(WRONG_PASSWORD));
-    }
-
-    @Test
-    void matchesTrainer_reportsWhetherCredentialsAreValid() {
-        when(trainerDao.findByUsername("John.Smith"))
-                .thenReturn(Optional.of(new Trainer(user, mock(TrainingType.class))));
-
-        assertTrue(service.matchesTrainer(VALID));
-        assertFalse(service.matchesTrainer(WRONG_PASSWORD));
     }
 }

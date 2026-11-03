@@ -12,6 +12,10 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -20,15 +24,19 @@ import java.util.Set;
 
 @Entity
 @Table(name = "trainees")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Trainee {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Setter
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
+    @Setter
     private String address;
 
     @OneToOne(cascade = CascadeType.ALL, optional = false)
@@ -43,14 +51,15 @@ public class Trainee {
     private Set<Trainer> trainers = new HashSet<>();
 
     /** Removing a trainee removes all of its trainings as well. */
+    @Getter(AccessLevel.NONE)
     @OneToMany(mappedBy = "trainee", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<Training> trainings = new HashSet<>();
 
-    protected Trainee() {
-        // required by JPA
-    }
-
-    public Trainee(User user, LocalDate dateOfBirth, String address) {
+    public Trainee(
+            User user,
+            LocalDate dateOfBirth,
+            String address
+    ) {
         this.user = user;
         this.dateOfBirth = dateOfBirth;
         this.address = address;
@@ -60,34 +69,6 @@ public class Trainee {
     public void replaceTrainers(Collection<Trainer> newTrainers) {
         trainers.retainAll(newTrainers);
         trainers.addAll(newTrainers);
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public Set<Trainer> getTrainers() {
-        return trainers;
     }
 
     @Override

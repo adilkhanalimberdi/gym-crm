@@ -6,6 +6,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Immutable;
 
 /**
@@ -16,6 +19,8 @@ import org.hibernate.annotations.Immutable;
 @Entity
 @Immutable
 @Table(name = "training_types")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TrainingType {
 
     @Id
@@ -24,18 +29,6 @@ public class TrainingType {
 
     @Column(nullable = false, unique = true)
     private String name;
-
-    protected TrainingType() {
-        // required by JPA
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
 
     @Override
     public String toString() {
