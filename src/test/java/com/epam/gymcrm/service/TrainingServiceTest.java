@@ -4,7 +4,7 @@ import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.TrainingDao;
 import com.epam.gymcrm.dto.Credentials;
-import com.epam.gymcrm.dto.NewTraining;
+import com.epam.gymcrm.dto.request.AddTrainingRequest;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
 import com.epam.gymcrm.exception.AccessDeniedException;
@@ -42,8 +42,8 @@ class TrainingServiceTest {
     private static final LocalDate DATE = LocalDate.of(2025, 3, 1);
     private static final Credentials TRAINEE_CREDENTIALS = new Credentials("John.Smith", "pw1");
     private static final Credentials TRAINER_CREDENTIALS = new Credentials("Anna.Lee", "pw2");
-    private static final NewTraining REQUEST =
-            new NewTraining("John.Smith", "Anna.Lee", "Morning Yoga", DATE, 60);
+    private static final AddTrainingRequest REQUEST =
+            new AddTrainingRequest("John.Smith", "Anna.Lee", "Morning Yoga", DATE, 60);
 
     @Mock
     private TrainingDao trainingDao;
@@ -127,18 +127,6 @@ class TrainingServiceTest {
         when(trainerDao.findByUsername("Anna.Lee")).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> service.addTraining(TRAINEE_CREDENTIALS, REQUEST));
-    }
-
-    @Test
-    void addTraining_validatesRequiredFieldsBeforeTouchingTheDatabase() {
-        assertThrows(InvalidRequestException.class, () -> service.addTraining(TRAINEE_CREDENTIALS,
-                new NewTraining("John.Smith", "Anna.Lee", " ", DATE, 60)));
-        assertThrows(InvalidRequestException.class, () -> service.addTraining(TRAINEE_CREDENTIALS,
-                new NewTraining("John.Smith", "Anna.Lee", "Name", null, 60)));
-        assertThrows(InvalidRequestException.class, () -> service.addTraining(TRAINEE_CREDENTIALS,
-                new NewTraining("John.Smith", "Anna.Lee", "Name", DATE, 0)));
-
-        verifyNoInteractions(authenticationService, traineeDao, trainerDao, trainingDao);
     }
 
     @Test

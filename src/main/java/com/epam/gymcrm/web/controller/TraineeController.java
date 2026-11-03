@@ -2,20 +2,18 @@ package com.epam.gymcrm.web.controller;
 
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
-import com.epam.gymcrm.dto.request.CreateTraineeRequest;
+import com.epam.gymcrm.dto.request.RegisterTraineeRequest;
 import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
+import com.epam.gymcrm.dto.request.UpdateTraineeTrainersRequest;
+import com.epam.gymcrm.dto.response.RegistrationResponse;
+import com.epam.gymcrm.dto.response.TraineeProfileResponse;
+import com.epam.gymcrm.dto.response.TraineeTrainingResponse;
+import com.epam.gymcrm.dto.response.TrainerSummary;
+import com.epam.gymcrm.mapper.GymCrmMapper;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.service.TraineeService;
 import com.epam.gymcrm.service.TrainingService;
 import com.epam.gymcrm.web.OpenApiConfig;
-import com.epam.gymcrm.web.dto.RegisterTraineeRequest;
-import com.epam.gymcrm.web.dto.RegistrationResponse;
-import com.epam.gymcrm.web.dto.TraineeProfileResponse;
-import com.epam.gymcrm.web.dto.TraineeTrainingResponse;
-import com.epam.gymcrm.web.dto.TrainerSummary;
-import com.epam.gymcrm.web.dto.UpdateTraineeProfileRequest;
-import com.epam.gymcrm.web.dto.UpdateTraineeTrainersRequest;
-import com.epam.gymcrm.web.mapper.ResponseMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -45,9 +43,9 @@ public class TraineeController {
 
     private final TraineeService traineeService;
     private final TrainingService trainingService;
-    private final ResponseMapper mapper;
+    private final GymCrmMapper mapper;
 
-    public TraineeController(TraineeService traineeService, TrainingService trainingService, ResponseMapper mapper) {
+    public TraineeController(TraineeService traineeService, TrainingService trainingService, GymCrmMapper mapper) {
         this.traineeService = traineeService;
         this.trainingService = trainingService;
         this.mapper = mapper;
@@ -59,8 +57,7 @@ public class TraineeController {
     @ApiResponse(responseCode = "201", description = "Trainee created; the generated credentials are returned")
     @ApiResponse(responseCode = "400", description = "Validation failed")
     public ResponseEntity<RegistrationResponse> register(@Valid @RequestBody RegisterTraineeRequest request) {
-        Trainee created = traineeService.create(new CreateTraineeRequest(
-                request.firstName(), request.lastName(), request.dateOfBirth(), request.address()));
+        Trainee created = traineeService.create(request);
         RegistrationResponse body = mapper.toRegistration(created.getUser());
         return ResponseEntity.created(URI.create("/api/trainees/" + body.username())).body(body);
     }
@@ -72,7 +69,7 @@ public class TraineeController {
     @ApiResponse(responseCode = "401", description = "Missing or wrong credentials")
     @ApiResponse(responseCode = "403", description = "The profile belongs to another user")
     public TraineeProfileResponse getProfile(@PathVariable String username, Credentials credentials) {
-        return mapper.toTraineeProfile(traineeService.getProfile(credentials.requireOwner(username)));
+        return mapper.toTraineeProfileResponse(traineeService.getProfile(credentials.requireOwner(username)));
     }
 
     @PutMapping("/{username}")
@@ -84,12 +81,10 @@ public class TraineeController {
     @ApiResponse(responseCode = "401", description = "Missing or wrong credentials")
     @ApiResponse(responseCode = "403", description = "The profile belongs to another user")
     public TraineeProfileResponse update(@PathVariable String username,
-                                         @Valid @RequestBody UpdateTraineeProfileRequest request,
+                                         @Valid @RequestBody UpdateTraineeRequest request,
                                          Credentials credentials) {
-        Trainee updated = traineeService.update(credentials.requireOwner(username), new UpdateTraineeRequest(
-                request.firstName(), request.lastName(), request.dateOfBirth(), request.address(),
-                request.isActive()));
-        return mapper.toTraineeProfile(updated);
+        Trainee updated = traineeService.update(credentials.requireOwner(username), request);
+        return mapper.toTraineeProfileResponse(updated);
     }
 
     @DeleteMapping("/{username}")
@@ -149,7 +144,7 @@ public class TraineeController {
             Credentials credentials) {
         var criteria = new TraineeTrainingCriteria(periodFrom, periodTo, trainerName, trainingType);
         return trainingService.getTraineeTrainings(credentials.requireOwner(username), criteria).stream()
-                .map(mapper::toTraineeTraining)
+                .map(mapper::toTraineeTrainingResponse)
                 .toList();
     }
 }

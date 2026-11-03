@@ -1,8 +1,8 @@
 package com.epam.gymcrm.mapper;
 
 import com.epam.gymcrm.dto.Credentials;
-import com.epam.gymcrm.dto.request.CreateTraineeRequest;
-import com.epam.gymcrm.dto.request.CreateTrainerRequest;
+import com.epam.gymcrm.dto.request.RegisterTraineeRequest;
+import com.epam.gymcrm.dto.request.RegisterTrainerRequest;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
@@ -19,18 +19,20 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
-class MappersTest {
+class GymCrmMapperTest {
 
     private static final Credentials GENERATED = new Credentials("John.Smith1", "abcde12345");
+
+    private final GymCrmMapper mapper = new GymCrmMapper();
 
     @Mock
     private TrainingType yoga;
 
     @Test
-    void traineeMapper_buildsActiveTraineeWithGeneratedCredentials() {
-        var request = new CreateTraineeRequest(" John ", "Smith ", LocalDate.of(1990, 5, 14), "Street 1");
+    void toTrainee_buildsActiveTraineeWithGeneratedCredentials() {
+        var request = new RegisterTraineeRequest(" John ", "Smith ", LocalDate.of(1990, 5, 14), "Street 1");
 
-        Trainee trainee = new TraineeMapper().toEntity(request, GENERATED);
+        Trainee trainee = mapper.toTrainee(request, GENERATED);
 
         assertNull(trainee.getId());
         assertEquals("John", trainee.getUser().getFirstName());
@@ -43,10 +45,10 @@ class MappersTest {
     }
 
     @Test
-    void trainerMapper_buildsActiveTrainerWithGivenSpecialization() {
-        var request = new CreateTrainerRequest("Anna", "Lee", 2L);
+    void toTrainer_buildsActiveTrainerWithGivenSpecialization() {
+        var request = new RegisterTrainerRequest("Anna", "Lee", 2L);
 
-        Trainer trainer = new TrainerMapper().toEntity(request, yoga, new Credentials("Anna.Lee", "pw"));
+        Trainer trainer = mapper.toTrainer(request, yoga, new Credentials("Anna.Lee", "pw"));
 
         assertNull(trainer.getId());
         assertEquals("Anna", trainer.getUser().getFirstName());

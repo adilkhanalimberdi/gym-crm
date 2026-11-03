@@ -1,10 +1,10 @@
 package com.epam.gymcrm.web.controller;
 
 import com.epam.gymcrm.dto.Credentials;
+import com.epam.gymcrm.dto.response.TrainingTypeResponse;
+import com.epam.gymcrm.mapper.GymCrmMapper;
 import com.epam.gymcrm.service.TrainingTypeService;
 import com.epam.gymcrm.web.OpenApiConfig;
-import com.epam.gymcrm.web.dto.TrainingTypeResponse;
-import com.epam.gymcrm.web.mapper.ResponseMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -21,9 +21,9 @@ import java.util.List;
 public class TrainingTypeController {
 
     private final TrainingTypeService trainingTypeService;
-    private final ResponseMapper mapper;
+    private final GymCrmMapper mapper;
 
-    public TrainingTypeController(TrainingTypeService trainingTypeService, ResponseMapper mapper) {
+    public TrainingTypeController(TrainingTypeService trainingTypeService, GymCrmMapper mapper) {
         this.trainingTypeService = trainingTypeService;
         this.mapper = mapper;
     }
@@ -35,6 +35,6 @@ public class TrainingTypeController {
     @ApiResponse(responseCode = "200", description = "All training types")
     @ApiResponse(responseCode = "401", description = "Missing or wrong credentials")
     public List<TrainingTypeResponse> getTrainingTypes(Credentials credentials) {
-        return mapper.toTrainingTypes(trainingTypeService.findAll(credentials));
+        return mapper.toTrainingTypeResponses(trainingTypeService.findAll(credentials));
     }
 }

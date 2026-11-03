@@ -1,11 +1,12 @@
-package com.epam.gymcrm.web.dto;
+package com.epam.gymcrm.dto.response;
 
 import java.time.LocalDate;
 
-public record TraineeTrainingResponse(
+public record TrainerTrainingResponse(
         String trainingName,
         LocalDate trainingDate,
         TrainingTypeResponse trainingType,
         int trainingDuration,
-        String trainerName
-) {}
+        String traineeName
+) {
+}

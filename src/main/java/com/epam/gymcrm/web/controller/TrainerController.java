@@ -2,18 +2,16 @@ package com.epam.gymcrm.web.controller;
 
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
-import com.epam.gymcrm.dto.request.CreateTrainerRequest;
+import com.epam.gymcrm.dto.request.RegisterTrainerRequest;
 import com.epam.gymcrm.dto.request.UpdateTrainerRequest;
+import com.epam.gymcrm.dto.response.RegistrationResponse;
+import com.epam.gymcrm.dto.response.TrainerProfileResponse;
+import com.epam.gymcrm.dto.response.TrainerTrainingResponse;
+import com.epam.gymcrm.mapper.GymCrmMapper;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.service.TrainerService;
 import com.epam.gymcrm.service.TrainingService;
 import com.epam.gymcrm.web.OpenApiConfig;
-import com.epam.gymcrm.web.dto.RegisterTrainerRequest;
-import com.epam.gymcrm.web.dto.RegistrationResponse;
-import com.epam.gymcrm.web.dto.TrainerProfileResponse;
-import com.epam.gymcrm.web.dto.TrainerTrainingResponse;
-import com.epam.gymcrm.web.dto.UpdateTrainerProfileRequest;
-import com.epam.gymcrm.web.mapper.ResponseMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -42,9 +40,9 @@ public class TrainerController {
 
     private final TrainerService trainerService;
     private final TrainingService trainingService;
-    private final ResponseMapper mapper;
+    private final GymCrmMapper mapper;
 
-    public TrainerController(TrainerService trainerService, TrainingService trainingService, ResponseMapper mapper) {
+    public TrainerController(TrainerService trainerService, TrainingService trainingService, GymCrmMapper mapper) {
         this.trainerService = trainerService;
         this.trainingService = trainingService;
         this.mapper = mapper;
@@ -57,8 +55,7 @@ public class TrainerController {
     @ApiResponse(responseCode = "400", description = "Validation failed")
     @ApiResponse(responseCode = "404", description = "The specialization does not exist")
     public ResponseEntity<RegistrationResponse> register(@Valid @RequestBody RegisterTrainerRequest request) {
-        Trainer created = trainerService.create(new CreateTrainerRequest(
-                request.firstName(), request.lastName(), request.specializationId()));
+        Trainer created = trainerService.create(request);
         RegistrationResponse body = mapper.toRegistration(created.getUser());
         return ResponseEntity.created(URI.create("/api/trainers/" + body.username())).body(body);
     }
@@ -70,7 +67,7 @@ public class TrainerController {
     @ApiResponse(responseCode = "401", description = "Missing or wrong credentials")
     @ApiResponse(responseCode = "403", description = "The profile belongs to another user")
     public TrainerProfileResponse getProfile(@PathVariable String username, Credentials credentials) {
-        return mapper.toTrainerProfile(trainerService.getProfile(credentials.requireOwner(username)));
+        return mapper.toTrainerProfileResponse(trainerService.getProfile(credentials.requireOwner(username)));
     }
 
     @PutMapping("/{username}")
@@ -82,10 +79,9 @@ public class TrainerController {
     @ApiResponse(responseCode = "401", description = "Missing or wrong credentials")
     @ApiResponse(responseCode = "403", description = "The profile belongs to another user")
     public TrainerProfileResponse update(@PathVariable String username,
-                                         @Valid @RequestBody UpdateTrainerProfileRequest request,
+                                         @Valid @RequestBody UpdateTrainerRequest request,
                                          Credentials credentials) {
-        return mapper.toTrainerProfile(trainerService.update(credentials.requireOwner(username),
-                new UpdateTrainerRequest(request.firstName(), request.lastName(), request.isActive())));
+        return mapper.toTrainerProfileResponse(trainerService.update(credentials.requireOwner(username), request));
     }
 
     @GetMapping("/{username}/trainings")
@@ -105,7 +101,7 @@ public class TrainerController {
             Credentials credentials) {
         var criteria = new TrainerTrainingCriteria(periodFrom, periodTo, traineeName);
         return trainingService.getTrainerTrainings(credentials.requireOwner(username), criteria).stream()
-                .map(mapper::toTrainerTraining)
+                .map(mapper::toTrainerTrainingResponse)
                 .toList();
     }
 }

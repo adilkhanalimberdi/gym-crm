@@ -1,4 +1,4 @@
-package com.epam.gymcrm.web.dto;
+package com.epam.gymcrm.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -11,4 +11,5 @@ public record TrainerProfileResponse(
         TrainingTypeResponse specialization,
         @JsonProperty("isActive") boolean isActive,
         List<TraineeSummary> trainees
-) {}
+) {
+}

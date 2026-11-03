@@ -1,10 +1,9 @@
 package com.epam.gymcrm.web.controller;
 
 import com.epam.gymcrm.dto.Credentials;
-import com.epam.gymcrm.dto.NewTraining;
+import com.epam.gymcrm.dto.request.AddTrainingRequest;
 import com.epam.gymcrm.service.TrainingService;
 import com.epam.gymcrm.web.OpenApiConfig;
-import com.epam.gymcrm.web.dto.AddTrainingRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -37,7 +36,6 @@ public class TrainingController {
     @ApiResponse(responseCode = "403", description = "The caller is neither the trainee nor the trainer")
     @ApiResponse(responseCode = "404", description = "The trainee or the trainer does not exist")
     public void addTraining(@Valid @RequestBody AddTrainingRequest request, Credentials credentials) {
-        trainingService.addTraining(credentials, new NewTraining(request.traineeUsername(), request.trainerUsername(),
-                request.trainingName(), request.trainingDate(), request.duration()));
+        trainingService.addTraining(credentials, request);
     }
 }

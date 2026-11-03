@@ -3,13 +3,13 @@ package com.epam.gymcrm.web.controller;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.TrainerProfile;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
-import com.epam.gymcrm.dto.request.CreateTrainerRequest;
+import com.epam.gymcrm.dto.request.RegisterTrainerRequest;
 import com.epam.gymcrm.dto.request.UpdateTrainerRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.service.TrainerService;
 import com.epam.gymcrm.service.TrainingService;
-import com.epam.gymcrm.web.mapper.ResponseMapper;
+import com.epam.gymcrm.mapper.GymCrmMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -40,7 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TrainerController.class)
-@Import(ResponseMapper.class)
+@Import(GymCrmMapper.class)
 class TrainerControllerTest {
 
     private static final Credentials CREDENTIALS = new Credentials(ANNA, "pw");
@@ -55,7 +55,7 @@ class TrainerControllerTest {
 
     @Test
     void register_returnsGeneratedCredentials() throws Exception {
-        when(trainerService.create(any(CreateTrainerRequest.class))).thenReturn(trainer());
+        when(trainerService.create(any(RegisterTrainerRequest.class))).thenReturn(trainer());
 
         mvc.perform(post("/api/trainers").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"firstName\":\"Anna\",\"lastName\":\"Lee\",\"specializationId\":2}"))
@@ -64,7 +64,7 @@ class TrainerControllerTest {
                 .andExpect(jsonPath("$.username").value(ANNA))
                 .andExpect(jsonPath("$.password").value("pw"));
 
-        verify(trainerService).create(new CreateTrainerRequest("Anna", "Lee", 2L));
+        verify(trainerService).create(new RegisterTrainerRequest("Anna", "Lee", 2L));
     }
 
     @Test

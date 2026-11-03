@@ -5,11 +5,10 @@ import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.TrainingTypeDao;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.TrainerProfile;
-import com.epam.gymcrm.dto.request.CreateTrainerRequest;
+import com.epam.gymcrm.dto.request.RegisterTrainerRequest;
 import com.epam.gymcrm.dto.request.UpdateTrainerRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
-import com.epam.gymcrm.exception.InvalidRequestException;
-import com.epam.gymcrm.mapper.TrainerMapper;
+import com.epam.gymcrm.mapper.GymCrmMapper;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
@@ -31,8 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -54,7 +51,7 @@ class TrainerServiceTest {
     @Mock
     private PasswordGenerator passwordGenerator;
     @Spy
-    private TrainerMapper mapper = new TrainerMapper();
+    private GymCrmMapper mapper = new GymCrmMapper();
     @Mock
     private TrainingType yoga;
     @InjectMocks
@@ -74,7 +71,7 @@ class TrainerServiceTest {
         when(passwordGenerator.generate()).thenReturn("abcde12345");
         when(trainerDao.save(any(Trainer.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Trainer created = service.create(new CreateTrainerRequest("Anna", "Lee", 2L));
+        Trainer created = service.create(new RegisterTrainerRequest("Anna", "Lee", 2L));
 
         assertEquals("Anna.Lee", created.getUser().getUsername());
         assertEquals("abcde12345", created.getUser().getPassword());
@@ -83,22 +80,10 @@ class TrainerServiceTest {
     }
 
     @Test
-    void create_rejectsMissingFirstName() {
-        assertThrows(InvalidRequestException.class, () -> service.create(new CreateTrainerRequest(null, "Lee", 2L)));
-        verifyNoInteractions(trainerDao);
-    }
-
-    @Test
-    void create_rejectsMissingSpecialization() {
-        assertThrows(InvalidRequestException.class, () -> service.create(new CreateTrainerRequest("Anna", "Lee", null)));
-        verifyNoInteractions(trainerDao);
-    }
-
-    @Test
     void create_rejectsUnknownSpecialization() {
         when(trainingTypeDao.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.create(new CreateTrainerRequest("Anna", "Lee", 99L)));
+        assertThrows(EntityNotFoundException.class, () -> service.create(new RegisterTrainerRequest("Anna", "Lee", 99L)));
         verifyNoInteractions(trainerDao);
     }
 
@@ -128,11 +113,4 @@ class TrainerServiceTest {
         assertSame(yoga, updated.trainer().getSpecialization());
     }
 
-    @Test
-    void update_rejectsMissingFirstName_withoutSaving() {
-        when(authenticationService.authenticateTrainer(CREDENTIALS)).thenReturn(trainer);
-
-        assertThrows(InvalidRequestException.class, () -> service.update(CREDENTIALS, new UpdateTrainerRequest("", "Leigh", true)));
-        verify(trainerDao, never()).update(any());
-    }
 }

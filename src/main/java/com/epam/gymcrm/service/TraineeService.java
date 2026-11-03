@@ -3,10 +3,10 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dto.Credentials;
-import com.epam.gymcrm.dto.request.CreateTraineeRequest;
+import com.epam.gymcrm.dto.request.RegisterTraineeRequest;
 import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
-import com.epam.gymcrm.mapper.TraineeMapper;
+import com.epam.gymcrm.mapper.GymCrmMapper;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import org.slf4j.Logger;
@@ -19,11 +19,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.epam.gymcrm.service.Validation.requireText;
-
 /**
  * Trainee use cases. Except for {@link #create}, every method first authenticates the caller and then
- * works on that caller's own profile. Each public method runs in one transaction.
+ * works on that caller's own profile. Each public method runs in one transaction. Requests are validated
+ * at the REST boundary, so the service does not repeat that.
  */
 @Service
 @Transactional
@@ -36,14 +35,16 @@ public class TraineeService {
     private final AuthenticationService authenticationService;
     private final UsernameGenerator usernameGenerator;
     private final PasswordGenerator passwordGenerator;
-    private final TraineeMapper mapper;
+    private final GymCrmMapper mapper;
 
-    public TraineeService(TraineeDao traineeDao,
-                          TrainerDao trainerDao,
-                          AuthenticationService authenticationService,
-                          UsernameGenerator usernameGenerator,
-                          PasswordGenerator passwordGenerator,
-                          TraineeMapper mapper) {
+    public TraineeService(
+            TraineeDao traineeDao,
+            TrainerDao trainerDao,
+            AuthenticationService authenticationService,
+            UsernameGenerator usernameGenerator,
+            PasswordGenerator passwordGenerator,
+            GymCrmMapper mapper
+    ) {
         this.traineeDao = traineeDao;
         this.trainerDao = trainerDao;
         this.authenticationService = authenticationService;
@@ -52,13 +53,12 @@ public class TraineeService {
         this.mapper = mapper;
     }
 
-    public Trainee create(CreateTraineeRequest request) {
-        String first = requireText(request.firstName(), "First name");
-        String last = requireText(request.lastName(), "Last name");
-        log.info("Creating trainee profile for {} {}", first, last);
-
-        Credentials generated = new Credentials(usernameGenerator.generate(first, last), passwordGenerator.generate());
-        Trainee created = traineeDao.save(mapper.toEntity(request, generated));
+    public Trainee create(RegisterTraineeRequest request) {
+        Credentials generated = new Credentials(
+                usernameGenerator.generate(request.firstName(), request.lastName()),
+                passwordGenerator.generate()
+        );
+        Trainee created = traineeDao.save(mapper.toTrainee(request, generated));
         log.info("Created trainee profile with username '{}'", generated.username());
         return created;
     }
@@ -72,9 +72,9 @@ public class TraineeService {
 
     public Trainee update(Credentials credentials, UpdateTraineeRequest request) {
         Trainee trainee = authenticationService.authenticateTrainee(credentials);
-        trainee.getUser().setFirstName(requireText(request.firstName(), "First name"));
-        trainee.getUser().setLastName(requireText(request.lastName(), "Last name"));
-        trainee.getUser().setActive(request.active());
+        trainee.getUser().setFirstName(request.firstName().trim());
+        trainee.getUser().setLastName(request.lastName().trim());
+        trainee.getUser().setActive(request.isActive());
         trainee.setDateOfBirth(request.dateOfBirth());
         trainee.setAddress(request.address());
         log.info("Updated trainee profile '{}'", credentials.username());
@@ -102,7 +102,9 @@ public class TraineeService {
         Set<String> requested = new HashSet<>(trainerUsernames);
         List<Trainer> trainers = trainerDao.findAllByUsernames(requested);
 
-        requested.removeAll(trainers.stream().map(trainer -> trainer.getUser().getUsername()).toList());
+        requested.removeAll(trainers.stream()
+                .map(trainer -> trainer.getUser().getUsername())
+                .toList());
         if (!requested.isEmpty()) {
             log.warn("Cannot update trainers of '{}': unknown trainers {}", credentials.username(), requested);
             throw new EntityNotFoundException("Trainer", String.join(", ", requested));

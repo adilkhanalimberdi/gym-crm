@@ -3,7 +3,6 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
 import com.epam.gymcrm.exception.ConflictException;
-import com.epam.gymcrm.exception.InvalidRequestException;
 import com.epam.gymcrm.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,14 +41,6 @@ class UserServiceTest {
         service.changePassword(CREDENTIALS, "newSecret");
 
         assertEquals("newSecret", user.getPassword());
-    }
-
-    @Test
-    void changePassword_rejectsBlankPassword() {
-        when(authenticationService.authenticate(CREDENTIALS)).thenReturn(user);
-
-        assertThrows(InvalidRequestException.class, () -> service.changePassword(CREDENTIALS, " "));
-        assertEquals("secret", user.getPassword());
     }
 
     @Test

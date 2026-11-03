@@ -2,7 +2,7 @@ package com.epam.gymcrm.web.controller;
 
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
-import com.epam.gymcrm.dto.request.CreateTraineeRequest;
+import com.epam.gymcrm.dto.request.RegisterTraineeRequest;
 import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
 import com.epam.gymcrm.exception.AccessDeniedException;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
@@ -12,7 +12,7 @@ import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.service.TraineeService;
 import com.epam.gymcrm.service.TrainingService;
-import com.epam.gymcrm.web.mapper.ResponseMapper;
+import com.epam.gymcrm.mapper.GymCrmMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TraineeController.class)
-@Import(ResponseMapper.class)
+@Import(GymCrmMapper.class)
 class TraineeControllerTest {
 
     private static final Credentials CREDENTIALS = new Credentials(JOHN, "secret");
@@ -59,7 +59,7 @@ class TraineeControllerTest {
 
     @Test
     void register_returnsGeneratedCredentials() throws Exception {
-        when(traineeService.create(any(CreateTraineeRequest.class))).thenReturn(trainee());
+        when(traineeService.create(any(RegisterTraineeRequest.class))).thenReturn(trainee());
 
         mvc.perform(post("/api/trainees").contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -70,12 +70,12 @@ class TraineeControllerTest {
                 .andExpect(jsonPath("$.username").value(JOHN))
                 .andExpect(jsonPath("$.password").value("secret"));
 
-        verify(traineeService).create(new CreateTraineeRequest("John", "Smith", LocalDate.of(1992, 7, 20), "7 River Road"));
+        verify(traineeService).create(new RegisterTraineeRequest("John", "Smith", LocalDate.of(1992, 7, 20), "7 River Road"));
     }
 
     @Test
     void register_acceptsMissingOptionalFields() throws Exception {
-        when(traineeService.create(any(CreateTraineeRequest.class))).thenReturn(trainee());
+        when(traineeService.create(any(RegisterTraineeRequest.class))).thenReturn(trainee());
 
         mvc.perform(post("/api/trainees").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"firstName\":\"John\",\"lastName\":\"Smith\"}"))

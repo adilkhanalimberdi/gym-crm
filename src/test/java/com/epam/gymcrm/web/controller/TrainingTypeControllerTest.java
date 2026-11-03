@@ -2,7 +2,7 @@ package com.epam.gymcrm.web.controller;
 
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.service.TrainingTypeService;
-import com.epam.gymcrm.web.mapper.ResponseMapper;
+import com.epam.gymcrm.mapper.GymCrmMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TrainingTypeController.class)
-@Import(ResponseMapper.class)
+@Import(GymCrmMapper.class)
 class TrainingTypeControllerTest {
 
     @Autowired

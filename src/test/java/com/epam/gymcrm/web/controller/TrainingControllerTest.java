@@ -1,7 +1,7 @@
 package com.epam.gymcrm.web.controller;
 
 import com.epam.gymcrm.dto.Credentials;
-import com.epam.gymcrm.dto.NewTraining;
+import com.epam.gymcrm.dto.request.AddTrainingRequest;
 import com.epam.gymcrm.exception.AccessDeniedException;
 import com.epam.gymcrm.service.TrainingService;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ class TrainingControllerTest {
                 .andExpect(status().isOk());
 
         verify(trainingService).addTraining(new Credentials(JOHN, "secret"),
-                new NewTraining(JOHN, ANNA, "Morning Yoga", LocalDate.of(2026, 11, 2), 60));
+                new AddTrainingRequest(JOHN, ANNA, "Morning Yoga", LocalDate.of(2026, 11, 2), 60));
     }
 
     @Test

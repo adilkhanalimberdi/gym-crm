@@ -1,9 +1,9 @@
 package com.epam.gymcrm.web.controller;
 
 import com.epam.gymcrm.dto.Credentials;
+import com.epam.gymcrm.dto.request.ChangePasswordRequest;
 import com.epam.gymcrm.service.AuthenticationService;
 import com.epam.gymcrm.service.UserService;
-import com.epam.gymcrm.web.dto.ChangePasswordRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
