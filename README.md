@@ -60,7 +60,7 @@ Swagger UI is at `http://localhost:8080/swagger-ui.html`, the OpenAPI document a
 ## Logging
 
 - **Transaction level:** every request gets a `transactionId` (taken from the `X-Transaction-Id` header when the caller sends a harmless one, generated otherwise). It is in every log line (`[...]` in the pattern), in the `X-Transaction-Id` response header and in error bodies. `TransactionId.current()` returns it for passing on to downstream services.
-- **REST call level:** logger `rest.calls` writes one line per call with the endpoint, request body, status and response body (the error message for failed calls). It is `INFO` for 2xx/3xx, `WARN` for 4xx and `ERROR` for 5xx. Passwords are masked and the `Authorization` header is never logged.
+- **REST call level:** `RestCallLoggingFilter` writes one line per call with the method, endpoint, status and duration. It is `INFO` for 2xx/3xx, `WARN` for 4xx and `ERROR` for 5xx. Request and response bodies contain personal data, so they are only written at `DEBUG` (passwords masked). The `Authorization` header is never logged.
 
 ## Quick start
 

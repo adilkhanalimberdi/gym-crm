@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.epam.gymcrm.exception.AuthenticationFailedException;
 import com.epam.gymcrm.service.AuthenticationService;
 import com.epam.gymcrm.service.UserService;
 import com.epam.gymcrm.web.controller.AuthController;
@@ -41,11 +42,14 @@ class LoggingFiltersTest {
     @MockitoBean
     private UserService userService;
 
-    private final Logger restLogger = (Logger) LoggerFactory.getLogger("rest.calls");
+    private final Logger restLogger = (Logger) LoggerFactory.getLogger(RestCallLoggingFilter.class);
     private final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    private Level originalLevel;
 
     @BeforeEach
     void attachAppender() {
+        originalLevel = restLogger.getLevel();
+        restLogger.setLevel(Level.INFO);
         appender.start();
         restLogger.addAppender(appender);
     }
@@ -53,6 +57,7 @@ class LoggingFiltersTest {
     @AfterEach
     void detachAppender() {
         restLogger.detachAppender(appender);
+        restLogger.setLevel(originalLevel);
     }
 
     @Test
@@ -95,8 +100,8 @@ class LoggingFiltersTest {
     }
 
     @Test
-    void failedCallIsLoggedAsWarningWithErrorMessageAndMaskedBody() throws Exception {
-        doThrow(new com.epam.gymcrm.exception.AuthenticationFailedException())
+    void failedCallIsLoggedAsWarningWithoutBodies() throws Exception {
+        doThrow(new AuthenticationFailedException())
                 .when(userService).changePassword(any(), any());
 
         mvc.perform(put("/api/auth/password").contentType(MediaType.APPLICATION_JSON)
@@ -106,6 +111,24 @@ class LoggingFiltersTest {
         String message = event.getFormattedMessage();
         assertEquals(Level.WARN, event.getLevel());
         assertTrue(message.contains("PUT /api/auth/password -> 401"));
+        assertFalse(message.contains("John.Smith"));
+        assertFalse(message.contains("oldSecret1"));
+        assertFalse(message.contains("Invalid username or password"));
+    }
+
+    @Test
+    void bodiesAreLoggedAtDebugWithMaskedPasswords() throws Exception {
+        restLogger.setLevel(Level.DEBUG);
+        doThrow(new AuthenticationFailedException())
+                .when(userService).changePassword(any(), any());
+
+        mvc.perform(put("/api/auth/password").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"John.Smith\",\"oldPassword\":\"oldSecret1\",\"newPassword\":\"newSecret2\"}"));
+
+        assertEquals(2, appender.list.size());
+        ILoggingEvent bodies = appender.list.get(1);
+        String message = bodies.getFormattedMessage();
+        assertEquals(Level.DEBUG, bodies.getLevel());
         assertTrue(message.contains("Invalid username or password"));
         assertTrue(message.contains("\"oldPassword\":\"***\""));
         assertFalse(message.contains("oldSecret1"));
