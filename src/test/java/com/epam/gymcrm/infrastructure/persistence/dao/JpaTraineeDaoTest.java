@@ -61,6 +61,15 @@ class JpaTraineeDaoTest extends PersistenceTest {
     }
 
     @Test
+    void findByUsername_sendsOneStatement_withSeveralTrainers() {
+        TraineeEntity trainee = persistTrainee("John", "Smith");
+        trainee.replaceTrainers(List.of(persistTrainer("Anna", "Lee", "Yoga"), persistTrainer("Mark", "Taylor", "Fitness")));
+        flushAndClear();
+
+        assertEquals(1, countStatements(() -> traineeDao.findByUsername("John.Smith")));
+    }
+
+    @Test
     void update_storesChangedFields() {
         persistTrainee("John", "Smith");
         flushAndClear();

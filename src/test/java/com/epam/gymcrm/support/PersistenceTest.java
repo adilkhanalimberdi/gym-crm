@@ -8,6 +8,8 @@ import com.epam.gymcrm.infrastructure.persistence.entity.TrainingTypeEntity;
 import com.epam.gymcrm.infrastructure.persistence.entity.UserEntity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,19 @@ public abstract class PersistenceTest {
 
     protected long count(String jpql) {
         return entityManager.createQuery(jpql, Long.class).getSingleResult();
+    }
+
+    /** Runs the action and returns how many SQL statements it sent; call flushAndClear() first. */
+    protected long countStatements(Runnable action) {
+        Statistics statistics = entityManager.getEntityManagerFactory().unwrap(SessionFactory.class).getStatistics();
+        statistics.setStatisticsEnabled(true);
+        statistics.clear();
+        try {
+            action.run();
+            return statistics.getPrepareStatementCount();
+        } finally {
+            statistics.setStatisticsEnabled(false);
+        }
     }
 
     protected TrainingTypeEntity trainingType(String name) {

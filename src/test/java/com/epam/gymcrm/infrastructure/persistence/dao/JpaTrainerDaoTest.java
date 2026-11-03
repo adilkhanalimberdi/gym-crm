@@ -108,6 +108,18 @@ class JpaTrainerDaoTest extends PersistenceTest {
     }
 
     @Test
+    void trainerSearches_sendOneStatement_withSeveralTrainers() {
+        persistTrainee("John", "Smith");
+        persistTrainer("Anna", "Lee", "Yoga");
+        persistTrainer("Mark", "Taylor", "Fitness");
+        flushAndClear();
+
+        assertEquals(1, countStatements(() -> trainerDao.findNotAssignedToTrainee("John.Smith")));
+        entityManager.clear();
+        assertEquals(1, countStatements(() -> trainerDao.findAllByUsernames(Set.of("Anna.Lee", "Mark.Taylor"))));
+    }
+
+    @Test
     void findNotAssignedToTrainee_returnsAllTrainers_whenNothingAssigned() {
         persistTrainee("John", "Smith");
         persistTrainer("Anna", "Lee", "Yoga");

@@ -147,6 +147,33 @@ class JpaTrainingDaoTest extends PersistenceTest {
         assertTrue(trainingDao.findByTrainee("John.Smith", criteria).isEmpty());
     }
 
+    /** With different trainers every training would otherwise load its trainer and user separately. */
+    @Test
+    void findByTrainee_sendsOneStatement_withDifferentTrainers() {
+        TraineeEntity trainee = persistTrainee("Many", "Trainers");
+        for (int i = 0; i < 5; i++) {
+            persistTraining(trainee, persistTrainer("Trainer", "Number" + i, "Yoga"), "Training " + i, "Yoga", MARCH_1);
+        }
+        flushAndClear();
+
+        long statements = countStatements(() -> trainingDao.findByTrainee("Many.Trainers", TraineeTrainingCriteria.none()));
+
+        assertEquals(1, statements);
+    }
+
+    @Test
+    void findByTrainer_sendsOneStatement_withDifferentTrainees() {
+        TrainerEntity trainer = persistTrainer("Many", "Trainees", "Yoga");
+        for (int i = 0; i < 5; i++) {
+            persistTraining(persistTrainee("Trainee", "Number" + i), trainer, "Training " + i, "Yoga", MARCH_1);
+        }
+        flushAndClear();
+
+        long statements = countStatements(() -> trainingDao.findByTrainer("Many.Trainees", TrainerTrainingCriteria.none()));
+
+        assertEquals(1, statements);
+    }
+
     @Test
     void findByTrainer_withoutCriteria_returnsOnlyThatTrainersTrainings() {
         List<Training> trainings = trainingDao.findByTrainer("Anna.Lee", TrainerTrainingCriteria.none());
