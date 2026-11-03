@@ -70,7 +70,16 @@ class TraineeControllerTest {
                 .andExpect(jsonPath("$.username").value(JOHN))
                 .andExpect(jsonPath("$.password").value("secret"));
 
-        verify(traineeService).create(new RegisterTraineeRequest("John", "Smith", LocalDate.of(1992, 7, 20), "7 River Road"));
+        verify(traineeService).create(new RegisterTraineeRequest(
+                "John",
+                "Smith",
+                LocalDate.of(
+                        1992,
+                        7,
+                        20
+                ),
+                "7 River Road"
+        ));
     }
 
     @Test
@@ -180,7 +189,17 @@ class TraineeControllerTest {
                 .andExpect(jsonPath("$.trainers").isEmpty());
 
         verify(traineeService).update(CREDENTIALS,
-                new UpdateTraineeRequest("John", "Smith", LocalDate.of(1992, 7, 20), "7 River Road", false));
+                new UpdateTraineeRequest(
+                        "John",
+                        "Smith",
+                        LocalDate.of(
+                                1992,
+                                7,
+                                20
+                        ),
+                        "7 River Road",
+                        false
+                ));
     }
 
     @Test
@@ -267,7 +286,20 @@ class TraineeControllerTest {
                 .andExpect(jsonPath("$[0].trainerName").value("Anna Lee"));
 
         verify(trainingService).getTraineeTrainings(CREDENTIALS,
-                new TraineeTrainingCriteria(LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 30), "Anna", "Yoga"));
+                new TraineeTrainingCriteria(
+                        LocalDate.of(
+                                2026,
+                                11,
+                                1
+                        ),
+                        LocalDate.of(
+                                2026,
+                                11,
+                                30
+                        ),
+                        "Anna",
+                        "Yoga"
+                ));
     }
 
     @Test

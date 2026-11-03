@@ -45,7 +45,17 @@ class TrainingControllerTest {
                 .andExpect(status().isOk());
 
         verify(trainingService).addTraining(new Credentials(JOHN, "secret"),
-                new AddTrainingRequest(JOHN, ANNA, "Morning Yoga", LocalDate.of(2026, 11, 2), 60));
+                new AddTrainingRequest(
+                        JOHN,
+                        ANNA,
+                        "Morning Yoga",
+                        LocalDate.of(
+                                2026,
+                                11,
+                                2
+                        ),
+                        60
+                ));
     }
 
     @Test

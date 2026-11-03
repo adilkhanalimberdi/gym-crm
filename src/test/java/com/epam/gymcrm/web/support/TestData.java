@@ -39,30 +39,70 @@ public final class TestData {
             Constructor<TrainingType> constructor = TrainingType.class.getDeclaredConstructor();
             constructor.setAccessible(true);
             TrainingType type = constructor.newInstance();
-            setField(type, "id", 2L);
-            setField(type, "name", "Yoga");
+            setField(
+                    type,
+                    "id",
+                    2L
+            );
+            setField(
+                    type,
+                    "name",
+                    "Yoga"
+            );
             return type;
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private static void setField(Object target, String name, Object value) throws ReflectiveOperationException {
+    private static void setField(
+            Object target,
+            String name,
+            Object value
+    ) throws ReflectiveOperationException {
         Field field = target.getClass().getDeclaredField(name);
         field.setAccessible(true);
         field.set(target, value);
     }
 
     public static Trainee trainee() {
-        return new Trainee(new User("John", "Smith", JOHN, "secret"), LocalDate.of(1992, 7, 20), "7 River Road");
+        return new Trainee(
+                new User(
+                        "John",
+                        "Smith",
+                        JOHN,
+                        "secret"
+                ),
+                LocalDate.of(
+                        1992,
+                        7,
+                        20
+                ),
+                "7 River Road"
+        );
     }
 
     public static Trainer trainer() {
-        return new Trainer(new User("Anna", "Lee", ANNA, "pw"), yoga());
+        return new Trainer(new User(
+                "Anna",
+                "Lee",
+                ANNA,
+                "pw"
+        ), yoga());
     }
 
     public static Training training(Trainee trainee, Trainer trainer) {
-        return new Training(trainee, trainer, "Morning Yoga", trainer.getSpecialization(),
-                LocalDate.of(2026, 11, 2), 60);
+        return new Training(
+                trainee,
+                trainer,
+                "Morning Yoga",
+                trainer.getSpecialization(),
+                LocalDate.of(
+                        2026,
+                        11,
+                        2
+                ),
+                60
+        );
     }
 }

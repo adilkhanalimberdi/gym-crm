@@ -61,7 +61,12 @@ class TrainerServiceTest {
 
     @BeforeEach
     void setUp() {
-        trainer = new Trainer(new User("Anna", "Lee", "Anna.Lee", "secret"), yoga);
+        trainer = new Trainer(new User(
+                "Anna",
+                "Lee",
+                "Anna.Lee",
+                "secret"
+        ), yoga);
     }
 
     @Test
@@ -71,7 +76,11 @@ class TrainerServiceTest {
         when(passwordGenerator.generate()).thenReturn("abcde12345");
         when(trainerDao.save(any(Trainer.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Trainer created = service.create(new RegisterTrainerRequest("Anna", "Lee", 2L));
+        Trainer created = service.create(new RegisterTrainerRequest(
+                "Anna",
+                "Lee",
+                2L
+        ));
 
         assertEquals("Anna.Lee", created.getUser().getUsername());
         assertEquals("abcde12345", created.getUser().getPassword());
@@ -83,13 +92,26 @@ class TrainerServiceTest {
     void create_rejectsUnknownSpecialization() {
         when(trainingTypeDao.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.create(new RegisterTrainerRequest("Anna", "Lee", 99L)));
+        assertThrows(EntityNotFoundException.class, () -> service.create(new RegisterTrainerRequest(
+                "Anna",
+                "Lee",
+                99L
+        )));
         verifyNoInteractions(trainerDao);
     }
 
     @Test
     void getProfile_returnsAuthenticatedTrainerWithItsTrainees() {
-        Trainee trainee = new Trainee(new User("John", "Smith", "John.Smith", "pw"), null, null);
+        Trainee trainee = new Trainee(
+                new User(
+                        "John",
+                        "Smith",
+                        "John.Smith",
+                        "pw"
+                ),
+                null,
+                null
+        );
         when(authenticationService.authenticateTrainer(CREDENTIALS)).thenReturn(trainer);
         when(traineeDao.findAllByTrainer("Anna.Lee")).thenReturn(List.of(trainee));
 
@@ -105,7 +127,11 @@ class TrainerServiceTest {
         when(trainerDao.update(trainer)).thenReturn(trainer);
         when(traineeDao.findAllByTrainer("Anna.Lee")).thenReturn(List.of());
 
-        TrainerProfile updated = service.update(CREDENTIALS, new UpdateTrainerRequest("Annie", "Leigh", false));
+        TrainerProfile updated = service.update(CREDENTIALS, new UpdateTrainerRequest(
+                "Annie",
+                "Leigh",
+                false
+        ));
 
         assertEquals("Annie", updated.trainer().getUser().getFirstName());
         assertEquals("Leigh", updated.trainer().getUser().getLastName());

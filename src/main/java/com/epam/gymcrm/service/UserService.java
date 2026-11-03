@@ -3,25 +3,19 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.exception.ConflictException;
 import com.epam.gymcrm.model.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Account operations shared by trainees and trainers: password and activation. */
+@Slf4j
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class UserService {
 
-    private static final Logger log = LoggerFactory.getLogger(UserService.class);
-
     private final AuthenticationService authenticationService;
-
-    public UserService(
-            AuthenticationService authenticationService
-    ) {
-        this.authenticationService = authenticationService;
-    }
 
     public void changePassword(Credentials credentials, String newPassword) {
         User user = authenticationService.authenticate(credentials);
@@ -34,10 +28,18 @@ public class UserService {
         User user = authenticationService.authenticate(credentials);
         String state = active ? "active" : "inactive";
         if (user.isActive() == active) {
-            log.warn("User '{}' is already {}", credentials.username(), state);
+            log.warn(
+                    "User '{}' is already {}",
+                    credentials.username(),
+                    state
+            );
             throw new ConflictException("User '" + credentials.username() + "' is already " + state);
         }
         user.setActive(active);
-        log.info("User '{}' is now {}", credentials.username(), state);
+        log.info(
+                "User '{}' is now {}",
+                credentials.username(),
+                state
+        );
     }
 }

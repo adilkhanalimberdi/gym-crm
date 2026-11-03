@@ -64,7 +64,11 @@ class TrainerControllerTest {
                 .andExpect(jsonPath("$.username").value(ANNA))
                 .andExpect(jsonPath("$.password").value("pw"));
 
-        verify(trainerService).create(new RegisterTrainerRequest("Anna", "Lee", 2L));
+        verify(trainerService).create(new RegisterTrainerRequest(
+                "Anna",
+                "Lee",
+                2L
+        ));
     }
 
     @Test
@@ -122,7 +126,11 @@ class TrainerControllerTest {
                 .andExpect(jsonPath("$.specialization.id").value(2))
                 .andExpect(jsonPath("$.trainees").isEmpty());
 
-        verify(trainerService).update(CREDENTIALS, new UpdateTrainerRequest("Annie", "Lee", true));
+        verify(trainerService).update(CREDENTIALS, new UpdateTrainerRequest(
+                "Annie",
+                "Lee",
+                true
+        ));
     }
 
     @Test
@@ -147,6 +155,14 @@ class TrainerControllerTest {
                 .andExpect(jsonPath("$[0].trainingType.name").value("Yoga"));
 
         verify(trainingService).getTrainerTrainings(CREDENTIALS,
-                new TrainerTrainingCriteria(LocalDate.of(2026, 11, 1), null, "John"));
+                new TrainerTrainingCriteria(
+                        LocalDate.of(
+                                2026,
+                                11,
+                                1
+                        ),
+                        null,
+                        "John"
+                ));
     }
 }

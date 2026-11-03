@@ -19,9 +19,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JpaTrainingDaoTest extends PersistenceTest {
 
-    private static final LocalDate MARCH_1 = LocalDate.of(2025, 3, 1);
-    private static final LocalDate MARCH_10 = LocalDate.of(2025, 3, 10);
-    private static final LocalDate MARCH_20 = LocalDate.of(2025, 3, 20);
+    private static final LocalDate MARCH_1 = LocalDate.of(
+            2025,
+            3,
+            1
+    );
+    private static final LocalDate MARCH_10 = LocalDate.of(
+            2025,
+            3,
+            10
+    );
+    private static final LocalDate MARCH_20 = LocalDate.of(
+            2025,
+            3,
+            20
+    );
 
     @Autowired
     private TrainingDao trainingDao;
@@ -30,13 +42,45 @@ class JpaTrainingDaoTest extends PersistenceTest {
     void setUpData() {
         Trainee john = persistTrainee("John", "Smith");
         Trainee emily = persistTrainee("Emily", "Brown");
-        Trainer anna = persistTrainer("Anna", "Lee", "Yoga");
-        Trainer mark = persistTrainer("Mark", "Taylor", "Resistance");
+        Trainer anna = persistTrainer(
+                "Anna",
+                "Lee",
+                "Yoga"
+        );
+        Trainer mark = persistTrainer(
+                "Mark",
+                "Taylor",
+                "Resistance"
+        );
 
-        persistTraining(john, anna, "Yoga basics", "Yoga", MARCH_10);
-        persistTraining(john, mark, "Heavy lifting", "Resistance", MARCH_1);
-        persistTraining(john, anna, "Advanced yoga", "Yoga", MARCH_20);
-        persistTraining(emily, anna, "Yoga for Emily", "Yoga", MARCH_10);
+        persistTraining(
+                john,
+                anna,
+                "Yoga basics",
+                "Yoga",
+                MARCH_10
+        );
+        persistTraining(
+                john,
+                mark,
+                "Heavy lifting",
+                "Resistance",
+                MARCH_1
+        );
+        persistTraining(
+                john,
+                anna,
+                "Advanced yoga",
+                "Yoga",
+                MARCH_20
+        );
+        persistTraining(
+                emily,
+                anna,
+                "Yoga for Emily",
+                "Yoga",
+                MARCH_10
+        );
         flushAndClear();
     }
 
@@ -51,7 +95,14 @@ class JpaTrainingDaoTest extends PersistenceTest {
         Trainer anna = entityManager.createQuery("select t from Trainer t where t.user.username = 'Anna.Lee'", Trainer.class)
                 .getSingleResult();
 
-        Training saved = trainingDao.save(new Training(john, anna, "New one", trainingType("Fitness"), MARCH_1, 45));
+        Training saved = trainingDao.save(new Training(
+                john,
+                anna,
+                "New one",
+                trainingType("Fitness"),
+                MARCH_1,
+                45
+        ));
         flushAndClear();
 
         assertEquals(45, entityManager.find(Training.class, saved.getId()).getDuration());
@@ -61,12 +112,21 @@ class JpaTrainingDaoTest extends PersistenceTest {
     void findByTrainee_withoutCriteria_returnsOnlyThatTraineesTrainingsOrderedByDate() {
         List<Training> trainings = trainingDao.findByTrainee("John.Smith", TraineeTrainingCriteria.none());
 
-        assertEquals(List.of("Heavy lifting", "Yoga basics", "Advanced yoga"), names(trainings));
+        assertEquals(List.of(
+                "Heavy lifting",
+                "Yoga basics",
+                "Advanced yoga"
+        ), names(trainings));
     }
 
     @Test
     void findByTrainee_filtersByDateRange() {
-        var criteria = new TraineeTrainingCriteria(MARCH_10, MARCH_20, null, null);
+        var criteria = new TraineeTrainingCriteria(
+                MARCH_10,
+                MARCH_20,
+                null,
+                null
+        );
 
         assertEquals(List.of("Yoga basics", "Advanced yoga"), names(trainingDao.findByTrainee("John.Smith", criteria)));
     }
@@ -74,49 +134,89 @@ class JpaTrainingDaoTest extends PersistenceTest {
     @Test
     void findByTrainee_filtersByOpenEndedDates() {
         assertEquals(List.of("Heavy lifting"),
-                names(trainingDao.findByTrainee("John.Smith", new TraineeTrainingCriteria(null, MARCH_1, null, null))));
+                names(trainingDao.findByTrainee("John.Smith", new TraineeTrainingCriteria(
+                        null,
+                        MARCH_1,
+                        null,
+                        null
+                ))));
         assertEquals(List.of("Advanced yoga"),
-                names(trainingDao.findByTrainee("John.Smith", new TraineeTrainingCriteria(MARCH_20, null, null, null))));
+                names(trainingDao.findByTrainee("John.Smith", new TraineeTrainingCriteria(
+                        MARCH_20,
+                        null,
+                        null,
+                        null
+                ))));
     }
 
     @Test
     void findByTrainee_filtersByTrainerNameIgnoringCase() {
-        var criteria = new TraineeTrainingCriteria(null, null, "mark", null);
+        var criteria = new TraineeTrainingCriteria(
+                null,
+                null,
+                "mark",
+                null
+        );
 
         assertEquals(List.of("Heavy lifting"), names(trainingDao.findByTrainee("John.Smith", criteria)));
     }
 
     @Test
     void findByTrainee_filtersByTrainerLastName() {
-        var criteria = new TraineeTrainingCriteria(null, null, "Lee", null);
+        var criteria = new TraineeTrainingCriteria(
+                null,
+                null,
+                "Lee",
+                null
+        );
 
         assertEquals(2, trainingDao.findByTrainee("John.Smith", criteria).size());
     }
 
     @Test
     void findByTrainee_filtersByTrainingType() {
-        var criteria = new TraineeTrainingCriteria(null, null, null, "resistance");
+        var criteria = new TraineeTrainingCriteria(
+                null,
+                null,
+                null,
+                "resistance"
+        );
 
         assertEquals(List.of("Heavy lifting"), names(trainingDao.findByTrainee("John.Smith", criteria)));
     }
 
     @Test
     void findByTrainee_combinesAllFilters() {
-        var criteria = new TraineeTrainingCriteria(MARCH_10, MARCH_20, "Anna", "Yoga");
+        var criteria = new TraineeTrainingCriteria(
+                MARCH_10,
+                MARCH_20,
+                "Anna",
+                "Yoga"
+        );
 
         assertEquals(List.of("Yoga basics", "Advanced yoga"), names(trainingDao.findByTrainee("John.Smith", criteria)));
     }
 
     @Test
     void findByTrainee_treatsBlankCriteriaAsNoFilter() {
-        var criteria = new TraineeTrainingCriteria(null, null, "  ", "");
+        var criteria = new TraineeTrainingCriteria(
+                null,
+                null,
+                "  ",
+                ""
+        );
 
         assertEquals(3, trainingDao.findByTrainee("John.Smith", criteria).size());
     }
 
     @Test
     void findByTrainee_returnsEmpty_whenNothingMatches() {
-        var criteria = new TraineeTrainingCriteria(null, null, "Nobody", null);
+        var criteria = new TraineeTrainingCriteria(
+                null,
+                null,
+                "Nobody",
+                null
+        );
 
         assertTrue(trainingDao.findByTrainee("John.Smith", criteria).isEmpty());
     }
@@ -125,12 +225,20 @@ class JpaTrainingDaoTest extends PersistenceTest {
     void findByTrainer_withoutCriteria_returnsOnlyThatTrainersTrainings() {
         List<Training> trainings = trainingDao.findByTrainer("Anna.Lee", TrainerTrainingCriteria.none());
 
-        assertEquals(List.of("Yoga basics", "Yoga for Emily", "Advanced yoga"), names(trainings));
+        assertEquals(List.of(
+                "Yoga basics",
+                "Yoga for Emily",
+                "Advanced yoga"
+        ), names(trainings));
     }
 
     @Test
     void findByTrainer_filtersByDateRangeAndTraineeName() {
-        var criteria = new TrainerTrainingCriteria(MARCH_1, MARCH_10, "emily");
+        var criteria = new TrainerTrainingCriteria(
+                MARCH_1,
+                MARCH_10,
+                "emily"
+        );
 
         assertEquals(List.of("Yoga for Emily"), names(trainingDao.findByTrainer("Anna.Lee", criteria)));
     }
@@ -138,8 +246,16 @@ class JpaTrainingDaoTest extends PersistenceTest {
     @Test
     void findByTrainer_filtersByOpenEndedDates() {
         assertEquals(List.of("Advanced yoga"),
-                names(trainingDao.findByTrainer("Anna.Lee", new TrainerTrainingCriteria(MARCH_20, null, null))));
+                names(trainingDao.findByTrainer("Anna.Lee", new TrainerTrainingCriteria(
+                        MARCH_20,
+                        null,
+                        null
+                ))));
         assertEquals(List.of("Yoga basics", "Yoga for Emily"),
-                names(trainingDao.findByTrainer("Anna.Lee", new TrainerTrainingCriteria(null, MARCH_10, null))));
+                names(trainingDao.findByTrainer("Anna.Lee", new TrainerTrainingCriteria(
+                        null,
+                        MARCH_10,
+                        null
+                ))));
     }
 }

@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,18 +36,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/trainers")
+@RequiredArgsConstructor
 @Tag(name = "Trainers", description = "Trainer profiles and trainings")
 public class TrainerController {
 
     private final TrainerService trainerService;
     private final TrainingService trainingService;
     private final GymCrmMapper mapper;
-
-    public TrainerController(TrainerService trainerService, TrainingService trainingService, GymCrmMapper mapper) {
-        this.trainerService = trainerService;
-        this.trainingService = trainingService;
-        this.mapper = mapper;
-    }
 
     @PostMapping
     @Operation(summary = "Register a trainer",
@@ -57,51 +53,67 @@ public class TrainerController {
     public ResponseEntity<RegistrationResponse> register(@Valid @RequestBody RegisterTrainerRequest request) {
         Trainer created = trainerService.create(request);
         RegistrationResponse body = mapper.toRegistration(created.getUser());
-        return ResponseEntity.created(URI.create("/api/trainers/" + body.username())).body(body);
+        return ResponseEntity.created(URI.create("/api/trainers/" + body.username()))
+                .body(body);
     }
 
     @GetMapping("/{username}")
     @SecurityRequirement(name = OpenApiConfig.BASIC_AUTH)
-    @Operation(summary = "Get a trainer profile", description = "Safe and idempotent. Callers can only read their own profile.")
-    @ApiResponse(responseCode = "200", description = "The profile with the assigned trainees")
+    @Operation(summary = "Get a trainer profile",
+            description = "Safe and idempotent. Callers can only read their own profile.")
     @ApiResponse(responseCode = "401", description = "Missing or wrong credentials")
     @ApiResponse(responseCode = "403", description = "The profile belongs to another user")
-    public TrainerProfileResponse getProfile(@PathVariable String username, Credentials credentials) {
-        return mapper.toTrainerProfileResponse(trainerService.getProfile(credentials.requireOwner(username)));
+    public ResponseEntity<TrainerProfileResponse> getProfile(@PathVariable String username,
+                                                             Credentials credentials) {
+        var profile = trainerService.getProfile(credentials.requireOwner(username));
+        return ResponseEntity.ok(mapper.toTrainerProfileResponse(profile));
     }
 
     @PutMapping("/{username}")
     @SecurityRequirement(name = OpenApiConfig.BASIC_AUTH)
     @Operation(summary = "Update a trainer profile",
             description = "Idempotent. The username and the specialization cannot be changed.")
-    @ApiResponse(responseCode = "200", description = "The updated profile")
     @ApiResponse(responseCode = "400", description = "Validation failed")
     @ApiResponse(responseCode = "401", description = "Missing or wrong credentials")
     @ApiResponse(responseCode = "403", description = "The profile belongs to another user")
-    public TrainerProfileResponse update(@PathVariable String username,
-                                         @Valid @RequestBody UpdateTrainerRequest request,
-                                         Credentials credentials) {
-        return mapper.toTrainerProfileResponse(trainerService.update(credentials.requireOwner(username), request));
+    public ResponseEntity<TrainerProfileResponse> update(
+            @PathVariable String username,
+            @Valid @RequestBody UpdateTrainerRequest request,
+            Credentials credentials
+    ) {
+        var profile = trainerService.update(credentials.requireOwner(username), request);
+        return ResponseEntity.ok(mapper.toTrainerProfileResponse(profile));
     }
 
     @GetMapping("/{username}/trainings")
     @SecurityRequirement(name = OpenApiConfig.BASIC_AUTH)
-    @Operation(summary = "List the trainings of a trainer", description = "Safe and idempotent. All filters are optional.")
-    @ApiResponse(responseCode = "200", description = "The trainings, ordered by date")
+    @Operation(summary = "List the trainings of a trainer",
+            description = "Safe and idempotent. All filters are optional. The trainings are ordered by date.")
     @ApiResponse(responseCode = "400", description = "Invalid filter, for example periodFrom after periodTo")
     @ApiResponse(responseCode = "401", description = "Missing or wrong credentials")
     @ApiResponse(responseCode = "403", description = "The profile belongs to another user")
-    public List<TrainerTrainingResponse> getTrainings(
+    public ResponseEntity<List<TrainerTrainingResponse>> getTrainings(
             @PathVariable String username,
-            @Parameter(description = "First day of the period, inclusive") @RequestParam(required = false)
+            @Parameter(description = "First day of the period, inclusive")
+            @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate periodFrom,
-            @Parameter(description = "Last day of the period, inclusive") @RequestParam(required = false)
+            @Parameter(description = "Last day of the period, inclusive")
+            @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate periodTo,
-            @Parameter(description = "First or last name of the trainee") @RequestParam(required = false) String traineeName,
-            Credentials credentials) {
-        var criteria = new TrainerTrainingCriteria(periodFrom, periodTo, traineeName);
-        return trainingService.getTrainerTrainings(credentials.requireOwner(username), criteria).stream()
+            @Parameter(description = "First or last name of the trainee")
+            @RequestParam(required = false) String traineeName,
+            Credentials credentials
+    ) {
+        var criteria = new TrainerTrainingCriteria(
+                periodFrom,
+                periodTo,
+                traineeName
+        );
+        List<TrainerTrainingResponse> trainings = trainingService
+                .getTrainerTrainings(credentials.requireOwner(username), criteria)
+                .stream()
                 .map(mapper::toTrainerTrainingResponse)
                 .toList();
+        return ResponseEntity.ok(trainings);
     }
 }

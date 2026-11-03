@@ -19,8 +19,9 @@ This is the third version of the project. The first kept everything in in-memory
 | Layer | Package | Notes |
 | --- | --- | --- |
 | Controllers | `web.controller` | `@RestController`s documented with Swagger annotations |
-| Web support | `web.dto`, `web.mapper`, `web.error`, `web.security`, `web.logging` | request/response objects, error handling, Basic credentials, logging filters |
-| Services | `service` | transactions (`@Transactional`), validation, authentication, username/password generation |
+| DTOs and mapping | `dto.request`, `dto.response`, `mapper` | one request type per use case (validated once, at the REST boundary), response objects, one `GymCrmMapper` |
+| Web support | `web.error`, `web.security`, `web.logging` | error handling (domain exceptions carry their HTTP status), Basic credentials, logging filters |
+| Services | `service` | transactions (`@Transactional`), authentication, username/password generation |
 | DAOs | `dao`, `dao.jpa` | `EntityManager`, JPQL and the Criteria API |
 | Entities | `model` | JPA entities |
 
@@ -78,4 +79,4 @@ The coverage report is written to `target/site/jacoco/index.html`.
 
 Database and logging settings are in `src/main/resources/application.properties`. To use another DBMS (for example PostgreSQL), change the `spring.datasource.*` values and add its JDBC driver to `pom.xml`. The schema is generated from the entities on startup (`spring.jpa.hibernate.ddl-auto=create-drop`) and training types are loaded from `src/main/resources/import.sql`.
 
-**Stack:** Java 21, Maven, Spring Boot 3, Hibernate 6, H2, springdoc-openapi, SLF4J + Logback, JUnit 5, Mockito, JaCoCo.
+**Stack:** Java 21, Maven, Spring Boot 3, Hibernate 6, H2, springdoc-openapi, Lombok, SLF4J + Logback, JUnit 5, Mockito, JaCoCo.

@@ -44,7 +44,11 @@ class UsernameGeneratorTest {
     @Test
     void generate_skipsTakenSerials() {
         when(userDao.findUsernamesStartingWith("John.Smith"))
-                .thenReturn(List.of("John.Smith", "John.Smith1", "John.Smith2"));
+                .thenReturn(List.of(
+                        "John.Smith",
+                        "John.Smith1",
+                        "John.Smith2"
+                ));
 
         assertEquals("John.Smith3", generator.generate("John", "Smith"));
     }

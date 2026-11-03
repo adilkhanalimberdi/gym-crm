@@ -1,19 +1,17 @@
 package com.epam.gymcrm.service;
 
 import com.epam.gymcrm.dao.UserDao;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Component
+@RequiredArgsConstructor
 public class UsernameGenerator {
 
     private final UserDao userDao;
-
-    public UsernameGenerator(UserDao userDao) {
-        this.userDao = userDao;
-    }
 
     /**
      * Builds "First.Last"; if that is taken, appends the first free serial number

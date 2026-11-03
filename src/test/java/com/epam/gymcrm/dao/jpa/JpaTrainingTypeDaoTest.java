@@ -32,6 +32,12 @@ class JpaTrainingTypeDaoTest extends PersistenceTest {
     void findAll_returnsAllTypesFromImportScript() {
         List<String> names = trainingTypeDao.findAll().stream().map(TrainingType::getName).toList();
 
-        assertEquals(List.of("Fitness", "Yoga", "Zumba", "Stretching", "Resistance"), names);
+        assertEquals(List.of(
+                "Fitness",
+                "Yoga",
+                "Zumba",
+                "Stretching",
+                "Resistance"
+        ), names);
     }
 }

@@ -21,14 +21,31 @@ class JpaTraineeDaoTest extends PersistenceTest {
 
     @Test
     void save_persistsTraineeTogetherWithItsUser() {
-        Trainee trainee = new Trainee(new User("John", "Smith", "John.Smith", "pw"), LocalDate.of(1990, 5, 14), "Street 1");
+        Trainee trainee = new Trainee(
+                new User(
+                        "John",
+                        "Smith",
+                        "John.Smith",
+                        "pw"
+                ),
+                LocalDate.of(
+                        1990,
+                        5,
+                        14
+                ),
+                "Street 1"
+        );
 
         traineeDao.save(trainee);
         flushAndClear();
 
         Trainee loaded = traineeDao.findByUsername("John.Smith").orElseThrow();
         assertEquals("Street 1", loaded.getAddress());
-        assertEquals(LocalDate.of(1990, 5, 14), loaded.getDateOfBirth());
+        assertEquals(LocalDate.of(
+                1990,
+                5,
+                14
+        ), loaded.getDateOfBirth());
         assertEquals("John", loaded.getUser().getFirstName());
         assertTrue(loaded.getUser().isActive());
     }
@@ -54,8 +71,16 @@ class JpaTraineeDaoTest extends PersistenceTest {
 
     @Test
     void findAllByTrainer_returnsOnlyTraineesAssignedToThatTrainer() {
-        Trainer anna = persistTrainer("Anna", "Lee", "Yoga");
-        Trainer mark = persistTrainer("Mark", "Taylor", "Fitness");
+        Trainer anna = persistTrainer(
+                "Anna",
+                "Lee",
+                "Yoga"
+        );
+        Trainer mark = persistTrainer(
+                "Mark",
+                "Taylor",
+                "Fitness"
+        );
         persistTrainee("John", "Smith").replaceTrainers(List.of(anna));
         persistTrainee("Kate", "Brown").replaceTrainers(List.of(anna, mark));
         persistTrainee("Paul", "White").replaceTrainers(List.of(mark));
@@ -69,10 +94,34 @@ class JpaTraineeDaoTest extends PersistenceTest {
     @Test
     void delete_removesUserAndTrainingsButKeepsTrainers() {
         Trainee trainee = persistTrainee("John", "Smith");
-        Trainer trainer = persistTrainer("Anna", "Lee", "Yoga");
+        Trainer trainer = persistTrainer(
+                "Anna",
+                "Lee",
+                "Yoga"
+        );
         trainee.replaceTrainers(List.of(trainer));
-        persistTraining(trainee, trainer, "Morning Yoga", "Yoga", LocalDate.of(2025, 3, 1));
-        persistTraining(trainee, trainer, "Evening Yoga", "Yoga", LocalDate.of(2025, 3, 2));
+        persistTraining(
+                trainee,
+                trainer,
+                "Morning Yoga",
+                "Yoga",
+                LocalDate.of(
+                        2025,
+                        3,
+                        1
+                )
+        );
+        persistTraining(
+                trainee,
+                trainer,
+                "Evening Yoga",
+                "Yoga",
+                LocalDate.of(
+                        2025,
+                        3,
+                        2
+                )
+        );
         flushAndClear();
 
         traineeDao.delete(traineeDao.findByUsername("John.Smith").orElseThrow());

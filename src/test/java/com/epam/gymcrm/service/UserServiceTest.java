@@ -31,7 +31,12 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        user = new User("John", "Smith", "John.Smith", "secret");
+        user = new User(
+                "John",
+                "Smith",
+                "John.Smith",
+                "secret"
+        );
     }
 
     @Test

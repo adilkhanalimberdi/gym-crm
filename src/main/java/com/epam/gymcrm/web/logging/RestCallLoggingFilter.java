@@ -4,9 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -23,11 +22,10 @@ import java.nio.charset.StandardCharsets;
  * bodies hold personal data, so they are only written at DEBUG, with passwords masked. The Authorization
  * header is never logged.
  */
+@Slf4j
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
 public class RestCallLoggingFilter extends OncePerRequestFilter {
-
-    private static final Logger log = LoggerFactory.getLogger(RestCallLoggingFilter.class);
 
     private static final int MAX_BODY_LENGTH = 2000;
 
@@ -38,7 +36,11 @@ public class RestCallLoggingFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, FilterChain chain)
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            FilterChain chain
+    )
             throws ServletException, IOException {
         var cachedRequest = new ContentCachingRequestWrapper(request);
         var cachedResponse = new ContentCachingResponseWrapper(response);
@@ -46,12 +48,20 @@ public class RestCallLoggingFilter extends OncePerRequestFilter {
         try {
             chain.doFilter(cachedRequest, cachedResponse);
         } finally {
-            logCall(cachedRequest, cachedResponse, (System.nanoTime() - start) / 1_000_000);
+            logCall(
+                    cachedRequest,
+                    cachedResponse,
+                    (System.nanoTime() - start) / 1_000_000
+            );
             cachedResponse.copyBodyToResponse();
         }
     }
 
-    private void logCall(ContentCachingRequestWrapper request, ContentCachingResponseWrapper response, long millis) {
+    private void logCall(
+            ContentCachingRequestWrapper request,
+            ContentCachingResponseWrapper response,
+            long millis
+    ) {
         int status = response.getStatus();
         String message = "{} {} -> {} in {} ms";
         Object[] arguments = {request.getMethod(), endpoint(request), status, millis};
@@ -69,11 +79,13 @@ public class RestCallLoggingFilter extends OncePerRequestFilter {
         if (!log.isDebugEnabled()) {
             return;
         }
-        log.debug("{} {} request body: {}, response body: {}",
+        log.debug(
+                "{} {} request body: {}, response body: {}",
                 request.getMethod(),
                 request.getRequestURI(),
                 body(request.getContentAsByteArray(), request.getCharacterEncoding()),
-                body(response.getContentAsByteArray(), response.getCharacterEncoding()));
+                body(response.getContentAsByteArray(), response.getCharacterEncoding())
+        );
     }
 
     private String endpoint(HttpServletRequest request) {

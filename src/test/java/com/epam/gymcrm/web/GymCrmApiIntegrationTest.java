@@ -39,7 +39,11 @@ class GymCrmApiIntegrationTest {
                 + "\",\"dateOfBirth\":\"1992-07-20\",\"address\":\"7 River Road\"}");
     }
 
-    private String registerTrainer(String first, String last, int specializationId) throws Exception {
+    private String registerTrainer(
+            String first,
+            String last,
+            int specializationId
+    ) throws Exception {
         return register("/api/trainers", "{\"firstName\":\"" + first + "\",\"lastName\":\"" + last
                 + "\",\"specializationId\":" + specializationId + "}");
     }
@@ -57,7 +61,11 @@ class GymCrmApiIntegrationTest {
 
     @Test
     void traineeAndTrainerJourney() throws Exception {
-        String trainer = registerTrainer("Anna", "Lee", 2);
+        String trainer = registerTrainer(
+                "Anna",
+                "Lee",
+                2
+        );
         String trainee = registerTrainee("John", "Smith");
         String trainerName = username(trainer);
         String traineeName = username(trainee);
@@ -134,7 +142,11 @@ class GymCrmApiIntegrationTest {
 
     @Test
     void loginAndPasswordChange() throws Exception {
-        String auth = registerTrainer("Mark", "Taylor", 1);
+        String auth = registerTrainer(
+                "Mark",
+                "Taylor",
+                1
+        );
         String user = username(auth);
         String password = new String(java.util.Base64.getDecoder().decode(auth.substring(6))).split(":")[1];
 

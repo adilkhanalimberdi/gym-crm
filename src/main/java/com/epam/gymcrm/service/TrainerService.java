@@ -11,8 +11,8 @@ import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.mapper.GymCrmMapper;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,11 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
  * works on that caller's own profile. Each public method runs in one transaction. Requests are validated
  * at the REST boundary, so the service does not repeat that.
  */
+@Slf4j
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class TrainerService {
-
-    private static final Logger log = LoggerFactory.getLogger(TrainerService.class);
 
     private final TrainerDao trainerDao;
     private final TraineeDao traineeDao;
@@ -35,31 +35,17 @@ public class TrainerService {
     private final PasswordGenerator passwordGenerator;
     private final GymCrmMapper mapper;
 
-    public TrainerService(
-            TrainerDao trainerDao,
-            TraineeDao traineeDao,
-            TrainingTypeDao trainingTypeDao,
-            AuthenticationService authenticationService,
-            UsernameGenerator usernameGenerator,
-            PasswordGenerator passwordGenerator,
-            GymCrmMapper mapper
-    ) {
-        this.trainerDao = trainerDao;
-        this.traineeDao = traineeDao;
-        this.trainingTypeDao = trainingTypeDao;
-        this.authenticationService = authenticationService;
-        this.usernameGenerator = usernameGenerator;
-        this.passwordGenerator = passwordGenerator;
-        this.mapper = mapper;
-    }
-
     public Trainer create(RegisterTrainerRequest request) {
         TrainingType specialization = findTrainingType(request.specializationId());
         Credentials generated = new Credentials(
                 usernameGenerator.generate(request.firstName(), request.lastName()),
                 passwordGenerator.generate()
         );
-        Trainer created = trainerDao.save(mapper.toTrainer(request, specialization, generated));
+        Trainer created = trainerDao.save(mapper.toTrainer(
+                request,
+                specialization,
+                generated
+        ));
         log.info("Created trainer profile with username '{}'", generated.username());
         return created;
     }

@@ -40,21 +40,56 @@ public abstract class PersistenceTest {
     }
 
     protected Trainee persistTrainee(String firstName, String lastName) {
-        User user = new User(firstName, lastName, firstName + "." + lastName, "secret");
-        Trainee trainee = new Trainee(user, LocalDate.of(1990, 1, 1), "Main Street");
+        User user = new User(
+                firstName,
+                lastName,
+                firstName + "." + lastName,
+                "secret"
+        );
+        Trainee trainee = new Trainee(
+                user,
+                LocalDate.of(
+                        1990,
+                        1,
+                        1
+                ),
+                "Main Street"
+        );
         entityManager.persist(trainee);
         return trainee;
     }
 
-    protected Trainer persistTrainer(String firstName, String lastName, String specialization) {
-        User user = new User(firstName, lastName, firstName + "." + lastName, "secret");
+    protected Trainer persistTrainer(
+            String firstName,
+            String lastName,
+            String specialization
+    ) {
+        User user = new User(
+                firstName,
+                lastName,
+                firstName + "." + lastName,
+                "secret"
+        );
         Trainer trainer = new Trainer(user, trainingType(specialization));
         entityManager.persist(trainer);
         return trainer;
     }
 
-    protected Training persistTraining(Trainee trainee, Trainer trainer, String name, String type, LocalDate date) {
-        Training training = new Training(trainee, trainer, name, trainingType(type), date, 60);
+    protected Training persistTraining(
+            Trainee trainee,
+            Trainer trainer,
+            String name,
+            String type,
+            LocalDate date
+    ) {
+        Training training = new Training(
+                trainee,
+                trainer,
+                name,
+                trainingType(type),
+                date,
+                60
+        );
         entityManager.persist(training);
         return training;
     }

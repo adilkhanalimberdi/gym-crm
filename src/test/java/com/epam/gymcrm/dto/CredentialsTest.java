@@ -37,9 +37,18 @@ class CredentialsTest {
 
     @Test
     void userAndTraineeToString_doNotContainPassword() {
-        User user = new User("John", "Smith", "John.Smith", "topSecret1");
+        User user = new User(
+                "John",
+                "Smith",
+                "John.Smith",
+                "topSecret1"
+        );
 
         assertFalse(user.toString().contains("topSecret1"));
-        assertFalse(new Trainee(user, null, null).toString().contains("topSecret1"));
+        assertFalse(new Trainee(
+                user,
+                null,
+                null
+        ).toString().contains("topSecret1"));
     }
 }

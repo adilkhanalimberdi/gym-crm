@@ -4,7 +4,10 @@ import com.epam.gymcrm.exception.AccessDeniedException;
 import org.springframework.lang.NonNull;
 
 /** Username and password a user authenticates with. */
-public record Credentials(String username, String password) {
+public record Credentials(
+        String username,
+        String password
+) {
 
     /** Guards endpoints that act on one user's own data: the caller has to be that user. */
     public Credentials requireOwner(String owner) {

@@ -8,11 +8,16 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "trainings")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Training {
 
     @Id
@@ -41,46 +46,20 @@ public class Training {
     @Column(nullable = false)
     private int duration;
 
-    protected Training() {
-        // required by JPA
-    }
-
-    public Training(Trainee trainee, Trainer trainer, String trainingName,
-                    TrainingType trainingType, LocalDate trainingDate, int duration) {
+    public Training(
+            Trainee trainee,
+            Trainer trainer,
+            String trainingName,
+            TrainingType trainingType,
+            LocalDate trainingDate,
+            int duration
+    ) {
         this.trainee = trainee;
         this.trainer = trainer;
         this.trainingName = trainingName;
         this.trainingType = trainingType;
         this.trainingDate = trainingDate;
         this.duration = duration;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Trainee getTrainee() {
-        return trainee;
-    }
-
-    public Trainer getTrainer() {
-        return trainer;
-    }
-
-    public String getTrainingName() {
-        return trainingName;
-    }
-
-    public TrainingType getTrainingType() {
-        return trainingType;
-    }
-
-    public LocalDate getTrainingDate() {
-        return trainingDate;
-    }
-
-    public int getDuration() {
-        return duration;
     }
 
     @Override

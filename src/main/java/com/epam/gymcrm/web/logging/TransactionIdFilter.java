@@ -25,7 +25,11 @@ public class TransactionIdFilter extends OncePerRequestFilter {
     private static final Pattern SAFE_ID = Pattern.compile("[A-Za-z0-9-]{1,64}");
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain chain
+    )
             throws ServletException, IOException {
         String id = request.getHeader(TransactionId.HEADER);
         if (id == null || !SAFE_ID.matcher(id).matches()) {

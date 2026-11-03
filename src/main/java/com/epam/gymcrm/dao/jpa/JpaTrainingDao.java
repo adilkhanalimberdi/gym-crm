@@ -44,15 +44,30 @@ public class JpaTrainingDao implements TrainingDao {
 
         List<Predicate> filters = new ArrayList<>();
         filters.add(cb.equal(trainee.join("user").<String>get("username"), traineeUsername));
-        addDateRange(filters, cb, training, criteria.fromDate(), criteria.toDate());
+        addDateRange(
+                filters,
+                cb,
+                training,
+                criteria.fromDate(),
+                criteria.toDate()
+        );
         if (hasText(criteria.trainerName())) {
-            filters.add(nameMatches(cb, trainerUser, criteria.trainerName()));
+            filters.add(nameMatches(
+                    cb,
+                    trainerUser,
+                    criteria.trainerName()
+            ));
         }
         if (hasText(criteria.trainingTypeName())) {
             filters.add(cb.equal(cb.lower(training.join("trainingType").<String>get("name")),
                     criteria.trainingTypeName().trim().toLowerCase()));
         }
-        return execute(query, training, filters, cb);
+        return execute(
+                query,
+                training,
+                filters,
+                cb
+        );
     }
 
     @Override
@@ -66,23 +81,47 @@ public class JpaTrainingDao implements TrainingDao {
 
         List<Predicate> filters = new ArrayList<>();
         filters.add(cb.equal(trainer.join("user").<String>get("username"), trainerUsername));
-        addDateRange(filters, cb, training, criteria.fromDate(), criteria.toDate());
+        addDateRange(
+                filters,
+                cb,
+                training,
+                criteria.fromDate(),
+                criteria.toDate()
+        );
         if (hasText(criteria.traineeName())) {
-            filters.add(nameMatches(cb, traineeUser, criteria.traineeName()));
+            filters.add(nameMatches(
+                    cb,
+                    traineeUser,
+                    criteria.traineeName()
+            ));
         }
-        return execute(query, training, filters, cb);
+        return execute(
+                query,
+                training,
+                filters,
+                cb
+        );
     }
 
-    private List<Training> execute(CriteriaQuery<Training> query, Root<Training> training,
-                                   List<Predicate> filters, CriteriaBuilder cb) {
+    private List<Training> execute(
+            CriteriaQuery<Training> query,
+            Root<Training> training,
+            List<Predicate> filters,
+            CriteriaBuilder cb
+    ) {
         query.select(training)
                 .where(filters.toArray(new Predicate[0]))
                 .orderBy(cb.asc(training.get("trainingDate")), cb.asc(training.get("id")));
         return entityManager.createQuery(query).getResultList();
     }
 
-    private void addDateRange(List<Predicate> filters, CriteriaBuilder cb, Root<Training> training,
-                              LocalDate from, LocalDate to) {
+    private void addDateRange(
+            List<Predicate> filters,
+            CriteriaBuilder cb,
+            Root<Training> training,
+            LocalDate from,
+            LocalDate to
+    ) {
         if (from != null) {
             filters.add(cb.greaterThanOrEqualTo(training.<LocalDate>get("trainingDate"), from));
         }
@@ -92,7 +131,11 @@ public class JpaTrainingDao implements TrainingDao {
     }
 
     /** A "name" matches the user's first or last name, ignoring case. */
-    private Predicate nameMatches(CriteriaBuilder cb, Join<?, User> user, String name) {
+    private Predicate nameMatches(
+            CriteriaBuilder cb,
+            Join<?, User> user,
+            String name
+    ) {
         String lowerName = name.trim().toLowerCase();
         return cb.or(
                 cb.equal(cb.lower(user.<String>get("firstName")), lowerName),

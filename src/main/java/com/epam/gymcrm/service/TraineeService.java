@@ -9,8 +9,8 @@ import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.mapper.GymCrmMapper;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,11 +24,11 @@ import java.util.Set;
  * works on that caller's own profile. Each public method runs in one transaction. Requests are validated
  * at the REST boundary, so the service does not repeat that.
  */
+@Slf4j
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class TraineeService {
-
-    private static final Logger log = LoggerFactory.getLogger(TraineeService.class);
 
     private final TraineeDao traineeDao;
     private final TrainerDao trainerDao;
@@ -36,22 +36,6 @@ public class TraineeService {
     private final UsernameGenerator usernameGenerator;
     private final PasswordGenerator passwordGenerator;
     private final GymCrmMapper mapper;
-
-    public TraineeService(
-            TraineeDao traineeDao,
-            TrainerDao trainerDao,
-            AuthenticationService authenticationService,
-            UsernameGenerator usernameGenerator,
-            PasswordGenerator passwordGenerator,
-            GymCrmMapper mapper
-    ) {
-        this.traineeDao = traineeDao;
-        this.trainerDao = trainerDao;
-        this.authenticationService = authenticationService;
-        this.usernameGenerator = usernameGenerator;
-        this.passwordGenerator = passwordGenerator;
-        this.mapper = mapper;
-    }
 
     public Trainee create(RegisterTraineeRequest request) {
         Credentials generated = new Credentials(
@@ -92,7 +76,11 @@ public class TraineeService {
     public List<Trainer> getUnassignedTrainers(Credentials credentials) {
         authenticationService.authenticateTrainee(credentials);
         List<Trainer> trainers = trainerDao.findNotAssignedToTrainee(credentials.username());
-        log.debug("Found {} trainers not assigned to trainee '{}'", trainers.size(), credentials.username());
+        log.debug(
+                "Found {} trainers not assigned to trainee '{}'",
+                trainers.size(),
+                credentials.username()
+        );
         return trainers;
     }
 
@@ -106,12 +94,20 @@ public class TraineeService {
                 .map(trainer -> trainer.getUser().getUsername())
                 .toList());
         if (!requested.isEmpty()) {
-            log.warn("Cannot update trainers of '{}': unknown trainers {}", credentials.username(), requested);
+            log.warn(
+                    "Cannot update trainers of '{}': unknown trainers {}",
+                    credentials.username(),
+                    requested
+            );
             throw new EntityNotFoundException("Trainer", String.join(", ", requested));
         }
 
         trainee.replaceTrainers(trainers);
-        log.info("Trainee '{}' now has {} assigned trainer(s)", credentials.username(), trainers.size());
+        log.info(
+                "Trainee '{}' now has {} assigned trainer(s)",
+                credentials.username(),
+                trainers.size()
+        );
         return traineeDao.update(trainee);
     }
 }

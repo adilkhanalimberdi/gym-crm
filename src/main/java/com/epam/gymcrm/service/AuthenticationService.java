@@ -8,8 +8,8 @@ import com.epam.gymcrm.exception.AuthenticationFailedException;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,21 +18,15 @@ import java.security.MessageDigest;
 import java.util.Optional;
 
 /** Checks username/password pairs; every service call except profile creation starts here. */
+@Slf4j
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class AuthenticationService {
-
-    private static final Logger log = LoggerFactory.getLogger(AuthenticationService.class);
 
     private final UserDao userDao;
     private final TraineeDao traineeDao;
     private final TrainerDao trainerDao;
-
-    public AuthenticationService(UserDao userDao, TraineeDao traineeDao, TrainerDao trainerDao) {
-        this.userDao = userDao;
-        this.traineeDao = traineeDao;
-        this.trainerDao = trainerDao;
-    }
 
     public User authenticate(Credentials credentials) {
         return orElseFail(findUser(credentials), credentials);

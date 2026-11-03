@@ -28,7 +28,12 @@ class AuthenticationServiceTest {
     private static final Credentials VALID = new Credentials("John.Smith", "secret");
     private static final Credentials WRONG_PASSWORD = new Credentials("John.Smith", "other");
 
-    private final User user = new User("John", "Smith", "John.Smith", "secret");
+    private final User user = new User(
+            "John",
+            "Smith",
+            "John.Smith",
+            "secret"
+    );
 
     @Mock
     private UserDao userDao;
@@ -70,7 +75,11 @@ class AuthenticationServiceTest {
 
     @Test
     void authenticateTrainee_returnsTrainee_whenPasswordMatches() {
-        Trainee trainee = new Trainee(user, null, null);
+        Trainee trainee = new Trainee(
+                user,
+                null,
+                null
+        );
         when(traineeDao.findByUsername("John.Smith")).thenReturn(Optional.of(trainee));
 
         assertSame(trainee, service.authenticateTrainee(VALID));

@@ -57,11 +57,29 @@ class TraineeServiceTest {
 
     @BeforeEach
     void setUp() {
-        trainee = new Trainee(new User("John", "Smith", "John.Smith", "secret"), LocalDate.of(1990, 1, 1), "Street 1");
+        trainee = new Trainee(
+                new User(
+                        "John",
+                        "Smith",
+                        "John.Smith",
+                        "secret"
+                ),
+                LocalDate.of(
+                        1990,
+                        1,
+                        1
+                ),
+                "Street 1"
+        );
     }
 
     private Trainer trainerWithUsername(String username) {
-        return new Trainer(new User("T", "T", username, "pw"), mock(TrainingType.class));
+        return new Trainer(new User(
+                "T",
+                "T",
+                username,
+                "pw"
+        ), mock(TrainingType.class));
     }
 
     @Test
@@ -70,7 +88,16 @@ class TraineeServiceTest {
         when(passwordGenerator.generate()).thenReturn("abcde12345");
         when(traineeDao.save(any(Trainee.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Trainee created = service.create(new RegisterTraineeRequest("John", "Smith", LocalDate.of(1990, 1, 1), "Street 1"));
+        Trainee created = service.create(new RegisterTraineeRequest(
+                "John",
+                "Smith",
+                LocalDate.of(
+                        1990,
+                        1,
+                        1
+                ),
+                "Street 1"
+        ));
 
         assertEquals("John.Smith1", created.getUser().getUsername());
         assertEquals("abcde12345", created.getUser().getPassword());
@@ -99,12 +126,26 @@ class TraineeServiceTest {
         when(traineeDao.update(trainee)).thenReturn(trainee);
 
         Trainee updated = service.update(CREDENTIALS,
-                new UpdateTraineeRequest("Johnny", "Smythe", LocalDate.of(1985, 2, 3), "New Street", false));
+                new UpdateTraineeRequest(
+                        "Johnny",
+                        "Smythe",
+                        LocalDate.of(
+                                1985,
+                                2,
+                                3
+                        ),
+                        "New Street",
+                        false
+                ));
 
         assertFalse(updated.getUser().isActive());
         assertEquals("Johnny", updated.getUser().getFirstName());
         assertEquals("Smythe", updated.getUser().getLastName());
-        assertEquals(LocalDate.of(1985, 2, 3), updated.getDateOfBirth());
+        assertEquals(LocalDate.of(
+                1985,
+                2,
+                3
+        ), updated.getDateOfBirth());
         assertEquals("New Street", updated.getAddress());
         assertEquals("John.Smith", updated.getUser().getUsername());
     }

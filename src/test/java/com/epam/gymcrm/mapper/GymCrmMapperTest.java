@@ -30,7 +30,16 @@ class GymCrmMapperTest {
 
     @Test
     void toTrainee_buildsActiveTraineeWithGeneratedCredentials() {
-        var request = new RegisterTraineeRequest(" John ", "Smith ", LocalDate.of(1990, 5, 14), "Street 1");
+        var request = new RegisterTraineeRequest(
+                " John ",
+                "Smith ",
+                LocalDate.of(
+                        1990,
+                        5,
+                        14
+                ),
+                "Street 1"
+        );
 
         Trainee trainee = mapper.toTrainee(request, GENERATED);
 
@@ -40,15 +49,27 @@ class GymCrmMapperTest {
         assertEquals("John.Smith1", trainee.getUser().getUsername());
         assertEquals("abcde12345", trainee.getUser().getPassword());
         assertTrue(trainee.getUser().isActive());
-        assertEquals(LocalDate.of(1990, 5, 14), trainee.getDateOfBirth());
+        assertEquals(LocalDate.of(
+                1990,
+                5,
+                14
+        ), trainee.getDateOfBirth());
         assertEquals("Street 1", trainee.getAddress());
     }
 
     @Test
     void toTrainer_buildsActiveTrainerWithGivenSpecialization() {
-        var request = new RegisterTrainerRequest("Anna", "Lee", 2L);
+        var request = new RegisterTrainerRequest(
+                "Anna",
+                "Lee",
+                2L
+        );
 
-        Trainer trainer = mapper.toTrainer(request, yoga, new Credentials("Anna.Lee", "pw"));
+        Trainer trainer = mapper.toTrainer(
+                request,
+                yoga,
+                new Credentials("Anna.Lee", "pw")
+        );
 
         assertNull(trainer.getId());
         assertEquals("Anna", trainer.getUser().getFirstName());

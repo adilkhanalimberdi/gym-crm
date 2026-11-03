@@ -26,10 +26,20 @@ public class BasicCredentialsResolver implements HandlerMethodArgumentResolver {
     }
 
     @Override
-    public Credentials resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-                                       NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+    public Credentials resolveArgument(
+            MethodParameter parameter,
+            ModelAndViewContainer mavContainer,
+            NativeWebRequest webRequest,
+            WebDataBinderFactory binderFactory
+    ) {
         String header = webRequest.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header == null || !header.regionMatches(true, 0, BASIC_PREFIX, 0, BASIC_PREFIX.length())) {
+        if (header == null || !header.regionMatches(
+                true,
+                0,
+                BASIC_PREFIX,
+                0,
+                BASIC_PREFIX.length()
+        )) {
             throw new AuthenticationFailedException();
         }
         try {

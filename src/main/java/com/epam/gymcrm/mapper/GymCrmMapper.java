@@ -33,16 +33,32 @@ public class GymCrmMapper {
 
     /** Builds a new trainee and its user; the generated username and password come in as credentials. */
     public Trainee toTrainee(RegisterTraineeRequest request, Credentials generated) {
-        User user = toUser(request.firstName(), request.lastName(), generated);
-        return new Trainee(user, request.dateOfBirth(), request.address());
+        User user = toUser(
+                request.firstName(),
+                request.lastName(),
+                generated
+        );
+        return new Trainee(
+                user,
+                request.dateOfBirth(),
+                request.address()
+        );
     }
 
     /**
      * Builds a new trainer and its user. The specialization is looked up by the service
      * (the request only has its id); the generated username and password come in as credentials.
      */
-    public Trainer toTrainer(RegisterTrainerRequest request, TrainingType specialization, Credentials generated) {
-        User user = toUser(request.firstName(), request.lastName(), generated);
+    public Trainer toTrainer(
+            RegisterTrainerRequest request,
+            TrainingType specialization,
+            Credentials generated
+    ) {
+        User user = toUser(
+                request.firstName(),
+                request.lastName(),
+                generated
+        );
         return new Trainer(user, specialization);
     }
 
@@ -139,7 +155,11 @@ public class GymCrmMapper {
         );
     }
 
-    private User toUser(String firstName, String lastName, Credentials generated) {
+    private User toUser(
+            String firstName,
+            String lastName,
+            Credentials generated
+    ) {
         return new User(
                 firstName.trim(),
                 lastName.trim(),

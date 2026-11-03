@@ -39,11 +39,21 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TrainingServiceTest {
 
-    private static final LocalDate DATE = LocalDate.of(2025, 3, 1);
+    private static final LocalDate DATE = LocalDate.of(
+            2025,
+            3,
+            1
+    );
     private static final Credentials TRAINEE_CREDENTIALS = new Credentials("John.Smith", "pw1");
     private static final Credentials TRAINER_CREDENTIALS = new Credentials("Anna.Lee", "pw2");
     private static final AddTrainingRequest REQUEST =
-            new AddTrainingRequest("John.Smith", "Anna.Lee", "Morning Yoga", DATE, 60);
+            new AddTrainingRequest(
+                    "John.Smith",
+                    "Anna.Lee",
+                    "Morning Yoga",
+                    DATE,
+                    60
+            );
 
     @Mock
     private TrainingDao trainingDao;
@@ -63,8 +73,22 @@ class TrainingServiceTest {
 
     @BeforeEach
     void setUp() {
-        trainee = new Trainee(new User("John", "Smith", "John.Smith", "pw1"), null, null);
-        trainer = new Trainer(new User("Anna", "Lee", "Anna.Lee", "pw2"), yoga);
+        trainee = new Trainee(
+                new User(
+                        "John",
+                        "Smith",
+                        "John.Smith",
+                        "pw1"
+                ),
+                null,
+                null
+        );
+        trainer = new Trainer(new User(
+                "Anna",
+                "Lee",
+                "Anna.Lee",
+                "pw2"
+        ), yoga);
     }
 
     private void stubExistingParticipants() {
@@ -131,8 +155,20 @@ class TrainingServiceTest {
 
     @Test
     void getTraineeTrainings_returnsTrainingsFromDao() {
-        var criteria = new TraineeTrainingCriteria(DATE, DATE.plusDays(5), "Anna", "Yoga");
-        List<Training> trainings = List.of(new Training(trainee, trainer, "Yoga", yoga, DATE, 60));
+        var criteria = new TraineeTrainingCriteria(
+                DATE,
+                DATE.plusDays(5),
+                "Anna",
+                "Yoga"
+        );
+        List<Training> trainings = List.of(new Training(
+                trainee,
+                trainer,
+                "Yoga",
+                yoga,
+                DATE,
+                60
+        ));
         when(trainingDao.findByTrainee("John.Smith", criteria)).thenReturn(trainings);
 
         assertEquals(trainings, service.getTraineeTrainings(TRAINEE_CREDENTIALS, criteria));
@@ -141,7 +177,12 @@ class TrainingServiceTest {
 
     @Test
     void getTraineeTrainings_rejectsInvertedDateRange() {
-        var criteria = new TraineeTrainingCriteria(DATE.plusDays(1), DATE, null, null);
+        var criteria = new TraineeTrainingCriteria(
+                DATE.plusDays(1),
+                DATE,
+                null,
+                null
+        );
 
         assertThrows(InvalidRequestException.class, () -> service.getTraineeTrainings(TRAINEE_CREDENTIALS, criteria));
         verifyNoInteractions(trainingDao);
@@ -149,8 +190,19 @@ class TrainingServiceTest {
 
     @Test
     void getTrainerTrainings_returnsTrainingsFromDao() {
-        var criteria = new TrainerTrainingCriteria(null, null, "John");
-        List<Training> trainings = List.of(new Training(trainee, trainer, "Yoga", yoga, DATE, 60));
+        var criteria = new TrainerTrainingCriteria(
+                null,
+                null,
+                "John"
+        );
+        List<Training> trainings = List.of(new Training(
+                trainee,
+                trainer,
+                "Yoga",
+                yoga,
+                DATE,
+                60
+        ));
         when(trainingDao.findByTrainer("Anna.Lee", criteria)).thenReturn(trainings);
 
         assertEquals(trainings, service.getTrainerTrainings(TRAINER_CREDENTIALS, criteria));
@@ -159,7 +211,11 @@ class TrainingServiceTest {
 
     @Test
     void getTrainerTrainings_rejectsInvertedDateRange() {
-        var criteria = new TrainerTrainingCriteria(DATE.plusDays(1), DATE, null);
+        var criteria = new TrainerTrainingCriteria(
+                DATE.plusDays(1),
+                DATE,
+                null
+        );
 
         assertThrows(InvalidRequestException.class, () -> service.getTrainerTrainings(TRAINER_CREDENTIALS, criteria));
         verifyNoInteractions(trainingDao);

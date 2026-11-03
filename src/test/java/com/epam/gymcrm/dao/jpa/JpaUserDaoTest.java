@@ -17,7 +17,12 @@ class JpaUserDaoTest extends PersistenceTest {
     private UserDao userDao;
 
     private void persistUser(String username) {
-        entityManager.persist(new User("First", "Last", username, "pw"));
+        entityManager.persist(new User(
+                "First",
+                "Last",
+                username,
+                "pw"
+        ));
     }
 
     @Test
