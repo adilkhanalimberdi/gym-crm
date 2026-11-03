@@ -6,6 +6,7 @@ import com.epam.gymcrm.dao.TrainingDao;
 import com.epam.gymcrm.dao.TrainingTypeDao;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
 import com.epam.gymcrm.exception.InvalidRequestException;
@@ -80,19 +81,23 @@ public class TrainingService {
     }
 
     @Transactional(readOnly = true)
-    public List<Training> getTraineeTrainings(Credentials credentials, TraineeTrainingCriteria criteria) {
+    public List<Training> getTraineeTrainings(Credentials credentials,
+                                              TraineeTrainingCriteria criteria,
+                                              PageQuery page) {
         authenticationService.authenticateTrainee(credentials);
         checkDateRange(criteria.fromDate(), criteria.toDate());
-        List<Training> trainings = trainingDao.findByTrainee(credentials.username(), criteria);
+        List<Training> trainings = trainingDao.findByTrainee(credentials.username(), criteria, page);
         log.debug("Found {} trainings of trainee '{}'", trainings.size(), credentials.username());
         return trainings;
     }
 
     @Transactional(readOnly = true)
-    public List<Training> getTrainerTrainings(Credentials credentials, TrainerTrainingCriteria criteria) {
+    public List<Training> getTrainerTrainings(Credentials credentials,
+                                              TrainerTrainingCriteria criteria,
+                                              PageQuery page) {
         authenticationService.authenticateTrainer(credentials);
         checkDateRange(criteria.fromDate(), criteria.toDate());
-        List<Training> trainings = trainingDao.findByTrainer(credentials.username(), criteria);
+        List<Training> trainings = trainingDao.findByTrainer(credentials.username(), criteria, page);
         log.debug("Found {} trainings of trainer '{}'", trainings.size(), credentials.username());
         return trainings;
     }

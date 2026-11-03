@@ -1,6 +1,7 @@
 package com.epam.gymcrm.infrastructure.persistence.dao;
 
 import com.epam.gymcrm.dao.TrainingDao;
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
 import com.epam.gymcrm.infrastructure.persistence.entity.TraineeEntity;
@@ -54,7 +55,7 @@ public class JpaTrainingDao implements TrainingDao {
     }
 
     @Override
-    public List<Training> findByTrainee(String traineeUsername, TraineeTrainingCriteria criteria) {
+    public List<Training> findByTrainee(String traineeUsername, TraineeTrainingCriteria criteria, PageQuery page) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<TrainingEntity> query = cb.createQuery(TrainingEntity.class);
         Root<TrainingEntity> training = query.from(TrainingEntity.class);
@@ -72,11 +73,11 @@ public class JpaTrainingDao implements TrainingDao {
             filters.add(cb.equal(cb.lower(trainingType.<String>get("name")),
                     criteria.trainingTypeName().trim().toLowerCase()));
         }
-        return execute(query, training, filters, cb);
+        return execute(query, training, filters, cb, page);
     }
 
     @Override
-    public List<Training> findByTrainer(String trainerUsername, TrainerTrainingCriteria criteria) {
+    public List<Training> findByTrainer(String trainerUsername, TrainerTrainingCriteria criteria, PageQuery page) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<TrainingEntity> query = cb.createQuery(TrainingEntity.class);
         Root<TrainingEntity> training = query.from(TrainingEntity.class);
@@ -90,17 +91,21 @@ public class JpaTrainingDao implements TrainingDao {
         if (hasText(criteria.traineeName())) {
             filters.add(nameMatches(cb, traineeUser, criteria.traineeName()));
         }
-        return execute(query, training, filters, cb);
+        return execute(query, training, filters, cb, page);
     }
 
     private List<Training> execute(CriteriaQuery<TrainingEntity> query,
                                    Root<TrainingEntity> training,
                                    List<Predicate> filters,
-                                   CriteriaBuilder cb) {
+                                   CriteriaBuilder cb,
+                                   PageQuery page) {
         query.select(training)
                 .where(filters.toArray(new Predicate[0]))
                 .orderBy(cb.asc(training.get("trainingDate")), cb.asc(training.get("id")));
+        // only to-one associations are fetched, so the database can apply the limit itself
         return entityManager.createQuery(query)
+                .setFirstResult(page.offset())
+                .setMaxResults(page.size())
                 .getResultList()
                 .stream()
                 .map(mapper::toDomain)

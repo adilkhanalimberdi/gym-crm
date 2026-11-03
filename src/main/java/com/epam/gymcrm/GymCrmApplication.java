@@ -3,6 +3,7 @@ package com.epam.gymcrm;
 import com.epam.gymcrm.config.AppConfig;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.request.CreateTraineeRequest;
 import com.epam.gymcrm.dto.request.CreateTrainerRequest;
@@ -33,15 +34,17 @@ public class GymCrmApplication {
             Credentials traineeCredentials = new Credentials(trainee.getUser().getUsername(), trainee.getUser().getPassword());
 
             log.info("Trainee credentials match: {}", facade.traineeCredentialsMatch(traineeCredentials));
-            log.info("Unassigned trainers: {}", facade.getUnassignedTrainers(traineeCredentials));
+            log.info("Unassigned trainers: {}",
+                    facade.getUnassignedTrainers(traineeCredentials, PageQuery.firstPage()));
 
             facade.updateTraineeTrainers(traineeCredentials, List.of(trainer.getUser().getUsername()));
-            log.info("Unassigned trainers after assigning: {}", facade.getUnassignedTrainers(traineeCredentials));
+            log.info("Unassigned trainers after assigning: {}",
+                    facade.getUnassignedTrainers(traineeCredentials, PageQuery.firstPage()));
 
             facade.addTraining(traineeCredentials, new NewTraining(trainee.getUser().getUsername(),
                     trainer.getUser().getUsername(), "Morning Yoga", "Yoga", LocalDate.now().plusDays(1), 60));
             log.info("Trainee trainings: {}",
-                    facade.getTraineeTrainings(traineeCredentials, TraineeTrainingCriteria.none()));
+                    facade.getTraineeTrainings(traineeCredentials, TraineeTrainingCriteria.none(), PageQuery.firstPage()));
 
             log.info("Trainee active after toggle: {}", facade.toggleTraineeActivation(traineeCredentials));
             log.info("Trainer profile: {}", facade.getTrainerProfile(trainerCredentials));

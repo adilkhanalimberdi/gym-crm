@@ -1,5 +1,6 @@
 package com.epam.gymcrm.dao;
 
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.model.Trainer;
 
 import java.util.Collection;
@@ -16,6 +17,6 @@ public interface TrainerDao {
 
     List<Trainer> findAllByUsernames(Collection<String> usernames);
 
-    /** Trainers that are not in the given trainee's list of assigned trainers. */
-    List<Trainer> findNotAssignedToTrainee(String traineeUsername);
+    /** Trainers that are not in the given trainee's list of assigned trainers, ordered by username. */
+    List<Trainer> findNotAssignedToTrainee(String traineeUsername, PageQuery page);
 }

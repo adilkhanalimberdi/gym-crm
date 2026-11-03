@@ -3,6 +3,7 @@ package com.epam.gymcrm.facade;
 import com.epam.gymcrm.config.AppConfig;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
 import com.epam.gymcrm.dto.request.CreateTraineeRequest;
@@ -84,7 +85,7 @@ class GymFacadeOutsideTransactionTest {
 
     @Test
     void getUnassignedTrainers_returnsUserAndSpecialization() {
-        Trainer trainer = facade.getUnassignedTrainers(traineeCredentials).get(0);
+        Trainer trainer = facade.getUnassignedTrainers(traineeCredentials, PageQuery.firstPage()).get(0);
 
         assertEquals("Anna.Lee", trainer.getUser().getUsername());
         assertEquals("Yoga", trainer.getSpecialization().getName());
@@ -100,8 +101,8 @@ class GymFacadeOutsideTransactionTest {
                 DATE,
                 60));
 
-        Training ofTrainee = facade.getTraineeTrainings(traineeCredentials, TraineeTrainingCriteria.none()).get(0);
-        Training ofTrainer = facade.getTrainerTrainings(trainerCredentials, TrainerTrainingCriteria.none()).get(0);
+        Training ofTrainee = facade.getTraineeTrainings(traineeCredentials, TraineeTrainingCriteria.none(), PageQuery.firstPage()).get(0);
+        Training ofTrainer = facade.getTrainerTrainings(trainerCredentials, TrainerTrainingCriteria.none(), PageQuery.firstPage()).get(0);
 
         assertEquals(added.getId(), ofTrainee.getId());
         assertEquals("Anna", ofTrainee.getTrainer().firstName());
@@ -138,6 +139,6 @@ class GymFacadeOutsideTransactionTest {
         facade.deleteTrainee(traineeCredentials);
 
         assertFalse(facade.traineeCredentialsMatch(traineeCredentials));
-        assertTrue(facade.getTrainerTrainings(trainerCredentials, TrainerTrainingCriteria.none()).isEmpty());
+        assertTrue(facade.getTrainerTrainings(trainerCredentials, TrainerTrainingCriteria.none(), PageQuery.firstPage()).isEmpty());
     }
 }

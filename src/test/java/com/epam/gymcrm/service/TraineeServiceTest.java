@@ -3,6 +3,7 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dto.Credentials;
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.dto.request.CreateTraineeRequest;
 import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
@@ -185,9 +186,9 @@ class TraineeServiceTest {
     void getUnassignedTrainers_returnsTrainersFromDao() {
         List<Trainer> trainers = List.of(trainerWithUsername("Anna.Lee"));
         when(authenticationService.authenticateTrainee(CREDENTIALS)).thenReturn(trainee);
-        when(trainerDao.findNotAssignedToTrainee("John.Smith")).thenReturn(trainers);
+        when(trainerDao.findNotAssignedToTrainee("John.Smith", PageQuery.firstPage())).thenReturn(trainers);
 
-        assertEquals(trainers, service.getUnassignedTrainers(CREDENTIALS));
+        assertEquals(trainers, service.getUnassignedTrainers(CREDENTIALS, PageQuery.firstPage()));
     }
 
     @Test

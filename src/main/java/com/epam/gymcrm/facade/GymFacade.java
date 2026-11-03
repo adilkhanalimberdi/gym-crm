@@ -2,6 +2,7 @@ package com.epam.gymcrm.facade;
 
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
 import com.epam.gymcrm.dto.request.CreateTraineeRequest;
@@ -89,20 +90,24 @@ public class GymFacade {
         traineeService.delete(credentials);
     }
 
-    public List<Training> getTraineeTrainings(Credentials credentials, TraineeTrainingCriteria criteria) {
-        return trainingService.getTraineeTrainings(credentials, criteria);
+    public List<Training> getTraineeTrainings(Credentials credentials,
+                                              TraineeTrainingCriteria criteria,
+                                              PageQuery page) {
+        return trainingService.getTraineeTrainings(credentials, criteria, page);
     }
 
-    public List<Training> getTrainerTrainings(Credentials credentials, TrainerTrainingCriteria criteria) {
-        return trainingService.getTrainerTrainings(credentials, criteria);
+    public List<Training> getTrainerTrainings(Credentials credentials,
+                                              TrainerTrainingCriteria criteria,
+                                              PageQuery page) {
+        return trainingService.getTrainerTrainings(credentials, criteria, page);
     }
 
     public Training addTraining(Credentials credentials, NewTraining training) {
         return trainingService.addTraining(credentials, training);
     }
 
-    public List<Trainer> getUnassignedTrainers(Credentials credentials) {
-        return traineeService.getUnassignedTrainers(credentials);
+    public List<Trainer> getUnassignedTrainers(Credentials credentials, PageQuery page) {
+        return traineeService.getUnassignedTrainers(credentials, page);
     }
 
     public Trainee updateTraineeTrainers(Credentials credentials, Collection<String> trainerUsernames) {

@@ -2,6 +2,7 @@ package com.epam.gymcrm.infrastructure.persistence.dao;
 
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.TrainingTypeDao;
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.exception.ResourceNotFoundException;
 import com.epam.gymcrm.infrastructure.persistence.entity.TraineeEntity;
 import com.epam.gymcrm.infrastructure.persistence.entity.TrainerEntity;
@@ -101,10 +102,23 @@ class JpaTrainerDaoTest extends PersistenceTest {
         trainee.replaceTrainers(List.of(assigned));
         flushAndClear();
 
-        List<Trainer> notAssigned = trainerDao.findNotAssignedToTrainee("John.Smith");
+        List<Trainer> notAssigned = trainerDao.findNotAssignedToTrainee("John.Smith", PageQuery.firstPage());
 
         assertEquals(List.of("Mark.Taylor", "Olga.King"),
                 notAssigned.stream().map(t -> t.getUser().getUsername()).toList());
+    }
+
+    @Test
+    void findNotAssignedToTrainee_returnsRequestedPage() {
+        persistTrainee("John", "Smith");
+        persistTrainer("Anna", "Lee", "Yoga");
+        persistTrainer("Mark", "Taylor", "Fitness");
+        persistTrainer("Olga", "King", "Zumba");
+        flushAndClear();
+
+        List<Trainer> secondPage = trainerDao.findNotAssignedToTrainee("John.Smith", new PageQuery(1, 2));
+
+        assertEquals(List.of("Olga.King"), secondPage.stream().map(t -> t.getUser().getUsername()).toList());
     }
 
     @Test
@@ -114,7 +128,7 @@ class JpaTrainerDaoTest extends PersistenceTest {
         persistTrainer("Mark", "Taylor", "Fitness");
         flushAndClear();
 
-        assertEquals(1, countStatements(() -> trainerDao.findNotAssignedToTrainee("John.Smith")));
+        assertEquals(1, countStatements(() -> trainerDao.findNotAssignedToTrainee("John.Smith", PageQuery.firstPage())));
         entityManager.clear();
         assertEquals(1, countStatements(() -> trainerDao.findAllByUsernames(Set.of("Anna.Lee", "Mark.Taylor"))));
     }
@@ -126,6 +140,6 @@ class JpaTrainerDaoTest extends PersistenceTest {
         persistTrainer("Mark", "Taylor", "Fitness");
         flushAndClear();
 
-        assertEquals(2, trainerDao.findNotAssignedToTrainee("John.Smith").size());
+        assertEquals(2, trainerDao.findNotAssignedToTrainee("John.Smith", PageQuery.firstPage()).size());
     }
 }

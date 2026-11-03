@@ -6,6 +6,7 @@ import com.epam.gymcrm.dao.TrainingDao;
 import com.epam.gymcrm.dao.TrainingTypeDao;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
@@ -158,9 +159,9 @@ class TrainingServiceTest {
     void getTraineeTrainings_returnsTrainingsFromDao() {
         var criteria = new TraineeTrainingCriteria(DATE, DATE.plusDays(5), "Anna", "Yoga");
         List<Training> trainings = List.of(new Training(trainee.toParticipant(), trainer.toParticipant(), "Yoga", yoga, DATE, 60));
-        when(trainingDao.findByTrainee("John.Smith", criteria)).thenReturn(trainings);
+        when(trainingDao.findByTrainee("John.Smith", criteria, PageQuery.firstPage())).thenReturn(trainings);
 
-        assertEquals(trainings, service.getTraineeTrainings(TRAINEE_CREDENTIALS, criteria));
+        assertEquals(trainings, service.getTraineeTrainings(TRAINEE_CREDENTIALS, criteria, PageQuery.firstPage()));
         verify(authenticationService).authenticateTrainee(TRAINEE_CREDENTIALS);
     }
 
@@ -168,7 +169,7 @@ class TrainingServiceTest {
     void getTraineeTrainings_rejectsInvertedDateRange() {
         var criteria = new TraineeTrainingCriteria(DATE.plusDays(1), DATE, null, null);
 
-        assertThrows(InvalidRequestException.class, () -> service.getTraineeTrainings(TRAINEE_CREDENTIALS, criteria));
+        assertThrows(InvalidRequestException.class, () -> service.getTraineeTrainings(TRAINEE_CREDENTIALS, criteria, PageQuery.firstPage()));
         verifyNoInteractions(trainingDao);
     }
 
@@ -176,9 +177,9 @@ class TrainingServiceTest {
     void getTrainerTrainings_returnsTrainingsFromDao() {
         var criteria = new TrainerTrainingCriteria(null, null, "John");
         List<Training> trainings = List.of(new Training(trainee.toParticipant(), trainer.toParticipant(), "Yoga", yoga, DATE, 60));
-        when(trainingDao.findByTrainer("Anna.Lee", criteria)).thenReturn(trainings);
+        when(trainingDao.findByTrainer("Anna.Lee", criteria, PageQuery.firstPage())).thenReturn(trainings);
 
-        assertEquals(trainings, service.getTrainerTrainings(TRAINER_CREDENTIALS, criteria));
+        assertEquals(trainings, service.getTrainerTrainings(TRAINER_CREDENTIALS, criteria, PageQuery.firstPage()));
         verify(authenticationService).authenticateTrainer(TRAINER_CREDENTIALS);
     }
 
@@ -186,7 +187,7 @@ class TrainingServiceTest {
     void getTrainerTrainings_rejectsInvertedDateRange() {
         var criteria = new TrainerTrainingCriteria(DATE.plusDays(1), DATE, null);
 
-        assertThrows(InvalidRequestException.class, () -> service.getTrainerTrainings(TRAINER_CREDENTIALS, criteria));
+        assertThrows(InvalidRequestException.class, () -> service.getTrainerTrainings(TRAINER_CREDENTIALS, criteria, PageQuery.firstPage()));
         verifyNoInteractions(trainingDao);
     }
 }

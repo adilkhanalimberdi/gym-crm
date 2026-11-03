@@ -1,5 +1,6 @@
 package com.epam.gymcrm.dao;
 
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
 import com.epam.gymcrm.model.Training;
@@ -10,7 +11,7 @@ public interface TrainingDao {
 
     Training save(Training training);
 
-    List<Training> findByTrainee(String traineeUsername, TraineeTrainingCriteria criteria);
+    List<Training> findByTrainee(String traineeUsername, TraineeTrainingCriteria criteria, PageQuery page);
 
-    List<Training> findByTrainer(String trainerUsername, TrainerTrainingCriteria criteria);
+    List<Training> findByTrainer(String trainerUsername, TrainerTrainingCriteria criteria, PageQuery page);
 }

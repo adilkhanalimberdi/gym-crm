@@ -33,6 +33,10 @@ Dependencies point inward: `infrastructure` -> `service`, `dao` -> `model`. The 
 
 All associations are `LAZY`. Every DAO query fetches what its domain object is built from, so one lookup or search is one SQL statement, however many rows it returns.
 
+**Paging**
+
+Trainer and training lists are read page by page: the caller passes a `PageQuery` (zero-based page, at most 100 items per page), or `PageQuery.firstPage()` for the first 20.
+
 **Rules**
 
 - Every operation except creating a profile needs a valid username and password, and works on the caller's own profile. Wrong credentials throw `AuthenticationFailedException`.

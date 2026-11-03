@@ -3,6 +3,7 @@ package com.epam.gymcrm.service;
 import com.epam.gymcrm.dao.TraineeDao;
 import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dto.Credentials;
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.dto.request.CreateTraineeRequest;
 import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
 import com.epam.gymcrm.exception.ResourceNotFoundException;
@@ -112,9 +113,9 @@ public class TraineeService {
     }
 
     @Transactional(readOnly = true)
-    public List<Trainer> getUnassignedTrainers(Credentials credentials) {
+    public List<Trainer> getUnassignedTrainers(Credentials credentials, PageQuery page) {
         authenticationService.authenticateTrainee(credentials);
-        List<Trainer> trainers = trainerDao.findNotAssignedToTrainee(credentials.username());
+        List<Trainer> trainers = trainerDao.findNotAssignedToTrainee(credentials.username(), page);
         log.debug("Found {} trainers not assigned to trainee '{}'", trainers.size(), credentials.username());
         return trainers;
     }

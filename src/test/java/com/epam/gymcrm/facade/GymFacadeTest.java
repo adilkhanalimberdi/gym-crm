@@ -2,6 +2,7 @@ package com.epam.gymcrm.facade;
 
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.dto.NewTraining;
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
 import com.epam.gymcrm.dto.request.CreateTraineeRequest;
@@ -135,17 +136,17 @@ class GymFacadeTest extends PersistenceTest {
     @Test
     void updateTraineeTrainers_changesWhichTrainersAreUnassigned() {
         Trainer second = facade.createTrainer(new CreateTrainerRequest("Mark", "Taylor", "Fitness"));
-        assertEquals(2, facade.getUnassignedTrainers(traineeCredentials).size());
+        assertEquals(2, facade.getUnassignedTrainers(traineeCredentials, PageQuery.firstPage()).size());
 
         facade.updateTraineeTrainers(traineeCredentials, Set.of(trainer.getUser().getUsername()));
         flushAndClear();
 
-        List<Trainer> unassigned = facade.getUnassignedTrainers(traineeCredentials);
+        List<Trainer> unassigned = facade.getUnassignedTrainers(traineeCredentials, PageQuery.firstPage());
         assertEquals(List.of(second.getUser().getUsername()), unassigned.stream().map(t -> t.getUser().getUsername()).toList());
 
         facade.updateTraineeTrainers(traineeCredentials, Set.of());
         flushAndClear();
-        assertEquals(2, facade.getUnassignedTrainers(traineeCredentials).size());
+        assertEquals(2, facade.getUnassignedTrainers(traineeCredentials, PageQuery.firstPage()).size());
     }
 
     @Test
@@ -154,11 +155,11 @@ class GymFacadeTest extends PersistenceTest {
         facade.addTraining(trainerCredentials, newTraining("Evening Yoga", DATE.plusDays(10)));
         flushAndClear();
 
-        List<Training> all = facade.getTraineeTrainings(traineeCredentials, TraineeTrainingCriteria.none());
+        List<Training> all = facade.getTraineeTrainings(traineeCredentials, TraineeTrainingCriteria.none(), PageQuery.firstPage());
         List<Training> late = facade.getTraineeTrainings(traineeCredentials,
-                new TraineeTrainingCriteria(DATE.plusDays(5), null, "Anna", "Yoga"));
+                new TraineeTrainingCriteria(DATE.plusDays(5), null, "Anna", "Yoga"), PageQuery.firstPage());
         List<Training> forTrainer = facade.getTrainerTrainings(trainerCredentials,
-                new TrainerTrainingCriteria(null, null, "John"));
+                new TrainerTrainingCriteria(null, null, "John"), PageQuery.firstPage());
 
         assertEquals(2, all.size());
         assertEquals("Evening Yoga", late.get(0).getTrainingName());
@@ -187,6 +188,6 @@ class GymFacadeTest extends PersistenceTest {
         assertEquals(0, count("select count(t) from TrainingEntity t"));
         assertEquals(0, count("select count(u) from UserEntity u where u.username = 'John.Smith'"));
         assertTrue(facade.trainerCredentialsMatch(trainerCredentials));
-        assertEquals(List.of(), facade.getTrainerTrainings(trainerCredentials, TrainerTrainingCriteria.none()));
+        assertEquals(List.of(), facade.getTrainerTrainings(trainerCredentials, TrainerTrainingCriteria.none(), PageQuery.firstPage()));
     }
 }

@@ -1,6 +1,7 @@
 package com.epam.gymcrm.infrastructure.persistence.dao;
 
 import com.epam.gymcrm.dao.TrainerDao;
+import com.epam.gymcrm.dto.PageQuery;
 import com.epam.gymcrm.exception.ResourceNotFoundException;
 import com.epam.gymcrm.infrastructure.persistence.entity.TrainerEntity;
 import com.epam.gymcrm.infrastructure.persistence.entity.TrainingTypeEntity;
@@ -75,7 +76,7 @@ public class JpaTrainerDao implements TrainerDao {
     }
 
     @Override
-    public List<Trainer> findNotAssignedToTrainee(String traineeUsername) {
+    public List<Trainer> findNotAssignedToTrainee(String traineeUsername, PageQuery page) {
         return entityManager
                 .createQuery(SELECT_TRAINER + """
                         where t not in (select assigned from TraineeEntity te join te.trainers assigned
@@ -83,6 +84,8 @@ public class JpaTrainerDao implements TrainerDao {
                         order by u.username
                         """, TrainerEntity.class)
                 .setParameter("username", traineeUsername)
+                .setFirstResult(page.offset())
+                .setMaxResults(page.size())
                 .getResultStream()
                 .map(mapper::toDomain)
                 .toList();
