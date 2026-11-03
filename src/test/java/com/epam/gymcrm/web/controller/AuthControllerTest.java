@@ -52,7 +52,7 @@ class AuthControllerTest {
     void login_requiresUsernameAndPassword() throws Exception {
         mvc.perform(get("/api/auth/login").param("username", "John.Smith"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Parameter 'password' is required"));
+                .andExpect(jsonPath("$.message").value("Required parameter 'password' is not present."));
 
         verifyNoInteractions(authenticationService);
     }

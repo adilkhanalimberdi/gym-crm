@@ -1,9 +1,11 @@
 package com.epam.gymcrm.exception;
 
-/** Thrown when required input is missing or invalid. */
-public class InvalidRequestException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+/** Thrown when a request is well-formed but its values do not make sense together. */
+public class InvalidRequestException extends ApiException {
 
     public InvalidRequestException(String message) {
-        super(message);
+        super(HttpStatus.BAD_REQUEST, message);
     }
 }

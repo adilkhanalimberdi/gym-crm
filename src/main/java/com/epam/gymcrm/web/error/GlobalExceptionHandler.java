@@ -1,118 +1,128 @@
 package com.epam.gymcrm.web.error;
 
-import com.epam.gymcrm.exception.AccessDeniedException;
-import com.epam.gymcrm.exception.AuthenticationFailedException;
-import com.epam.gymcrm.exception.ConflictException;
-import com.epam.gymcrm.exception.EntityNotFoundException;
-import com.epam.gymcrm.exception.InvalidRequestException;
+import com.epam.gymcrm.dto.response.ErrorResponse;
+import com.epam.gymcrm.exception.ApiException;
 import com.epam.gymcrm.web.logging.TransactionId;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.HttpMediaTypeNotSupportedException;
-import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
 
-/** Turns every failure into an {@link ErrorResponse} with a suitable status; internals are never exposed. */
+/**
+ * Turns every failure into an {@link ErrorResponse} with a suitable status; internals are never exposed.
+ * Domain exceptions carry their own status, Spring MVC exceptions are handled by the base class, so a new
+ * exception needs no new handler method.
+ */
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(AuthenticationFailedException.class)
-    ResponseEntity<ErrorResponse> handleAuthenticationFailed(AuthenticationFailedException e, HttpServletRequest request) {
-        return respond(HttpStatus.UNAUTHORIZED, e.getMessage(), request, "WWW-Authenticate", "Basic realm=\"gym-crm\"");
-    }
+    private static final String BASIC_CHALLENGE = "Basic realm=\"gym-crm\"";
+    private static final String UNEXPECTED_ERROR_MESSAGE = "Unexpected error, please contact support with the transaction id";
 
-    @ExceptionHandler(AccessDeniedException.class)
-    ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e, HttpServletRequest request) {
-        return respond(HttpStatus.FORBIDDEN, e.getMessage(), request);
-    }
-
-    @ExceptionHandler(EntityNotFoundException.class)
-    ResponseEntity<ErrorResponse> handleNotFound(EntityNotFoundException e, HttpServletRequest request) {
-        return respond(HttpStatus.NOT_FOUND, e.getMessage(), request);
-    }
-
-    @ExceptionHandler(ConflictException.class)
-    ResponseEntity<ErrorResponse> handleConflict(ConflictException e, HttpServletRequest request) {
-        return respond(HttpStatus.CONFLICT, e.getMessage(), request);
-    }
-
-    @ExceptionHandler(InvalidRequestException.class)
-    ResponseEntity<ErrorResponse> handleInvalidRequest(InvalidRequestException e, HttpServletRequest request) {
-        return respond(HttpStatus.BAD_REQUEST, e.getMessage(), request);
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException e, HttpServletRequest request) {
-        String message = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + " " + error.getDefaultMessage())
-                .sorted()
-                .collect(Collectors.joining("; "));
-        return respond(HttpStatus.BAD_REQUEST, "Validation failed: " + message, request);
-    }
-
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    ResponseEntity<ErrorResponse> handleUnreadableBody(HttpMessageNotReadableException e, HttpServletRequest request) {
-        return respond(HttpStatus.BAD_REQUEST, "Request body is missing or malformed", request);
-    }
-
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    ResponseEntity<ErrorResponse> handleMissingParameter(MissingServletRequestParameterException e,
-                                                         HttpServletRequest request) {
-        return respond(HttpStatus.BAD_REQUEST, "Parameter '" + e.getParameterName() + "' is required", request);
-    }
-
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException e, HttpServletRequest request) {
-        return respond(HttpStatus.BAD_REQUEST, "Parameter '" + e.getName() + "' has an invalid value", request);
-    }
-
-    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException e,
-                                                           HttpServletRequest request) {
-        return respond(HttpStatus.METHOD_NOT_ALLOWED, e.getMessage(), request);
-    }
-
-    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    ResponseEntity<ErrorResponse> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException e,
-                                                              HttpServletRequest request) {
-        return respond(HttpStatus.UNSUPPORTED_MEDIA_TYPE, e.getMessage(), request);
-    }
-
-    @ExceptionHandler(NoResourceFoundException.class)
-    ResponseEntity<ErrorResponse> handleNoResource(NoResourceFoundException e, HttpServletRequest request) {
-        return respond(HttpStatus.NOT_FOUND, "No endpoint " + request.getMethod() + " " + request.getRequestURI(), request);
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<Object> handleApiException(ApiException exception, WebRequest request) {
+        HttpHeaders headers = new HttpHeaders();
+        if (exception.getStatus() == HttpStatus.UNAUTHORIZED) {
+            headers.set(HttpHeaders.WWW_AUTHENTICATE, BASIC_CHALLENGE);
+        }
+        return handleExceptionInternal(exception, null, headers, exception.getStatus(), request);
     }
 
     @ExceptionHandler(Exception.class)
-    ResponseEntity<ErrorResponse> handleUnexpected(Exception e, HttpServletRequest request) {
-        log.error("Unexpected error while handling {} {}", request.getMethod(), request.getRequestURI(), e);
-        return respond(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error, please contact support with the transaction id",
+    public ResponseEntity<Object> handleUnexpected(Exception exception, WebRequest request) {
+        HttpServletRequest servletRequest = servletRequestOf(request);
+        log.error("Unexpected error while handling {} {}", servletRequest.getMethod(), servletRequest.getRequestURI(),
+                exception);
+        return handleExceptionInternal(exception, null, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException exception,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatusCode status,
+                                                                  WebRequest request) {
+        String details = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + " " + error.getDefaultMessage())
+                .sorted()
+                .collect(Collectors.joining("; "));
+        return handleExceptionInternal(exception, problemOf(status, "Validation failed: " + details), headers, status,
                 request);
     }
 
-    private ResponseEntity<ErrorResponse> respond(HttpStatus status, String message, HttpServletRequest request,
-                                                  String... headerNameAndValue) {
-        var body = new ErrorResponse(Instant.now(), status.value(), status.getReasonPhrase(), message,
-                request.getRequestURI(), TransactionId.current());
-        var headers = new HttpHeaders();
-        if (headerNameAndValue.length == 2) {
-            headers.add(headerNameAndValue[0], headerNameAndValue[1]);
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException exception,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatusCode status,
+                                                                  WebRequest request) {
+        return handleExceptionInternal(exception, problemOf(status, "Request body is missing or malformed"), headers,
+                status, request);
+    }
+
+    /** The default message would echo the rejected value back to the caller. */
+    @Override
+    protected ResponseEntity<Object> handleTypeMismatch(TypeMismatchException exception,
+                                                        HttpHeaders headers,
+                                                        HttpStatusCode status,
+                                                        WebRequest request) {
+        String message = "Parameter '" + exception.getPropertyName() + "' has an invalid value";
+        return handleExceptionInternal(exception, problemOf(status, message), headers, status, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(Exception exception,
+                                                             Object body,
+                                                             HttpHeaders headers,
+                                                             HttpStatusCode statusCode,
+                                                             WebRequest request) {
+        ErrorResponse response = new ErrorResponse(
+                Instant.now(),
+                statusCode.value(),
+                HttpStatus.valueOf(statusCode.value()).getReasonPhrase(),
+                messageOf(exception, body),
+                servletRequestOf(request).getRequestURI(),
+                TransactionId.current()
+        );
+        return ResponseEntity.status(statusCode)
+                .headers(headers)
+                .body(response);
+    }
+
+    private String messageOf(Exception exception, Object body) {
+        if (exception instanceof ApiException) {
+            return exception.getMessage();
         }
-        return ResponseEntity.status(status).headers(headers).body(body);
+        if (body instanceof ProblemDetail problem && problem.getDetail() != null) {
+            return problem.getDetail();
+        }
+        if (exception instanceof org.springframework.web.ErrorResponse springError
+                && springError.getBody().getDetail() != null) {
+            return springError.getBody().getDetail();
+        }
+        return UNEXPECTED_ERROR_MESSAGE;
+    }
+
+    private ProblemDetail problemOf(HttpStatusCode status, String detail) {
+        return ProblemDetail.forStatusAndDetail(status, detail);
+    }
+
+    private HttpServletRequest servletRequestOf(WebRequest request) {
+        return ((ServletWebRequest) request).getRequest();
     }
 }
