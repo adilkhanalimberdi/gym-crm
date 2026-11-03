@@ -1,4 +1,4 @@
-package com.epam.gymcrm.dao.jpa;
+package com.epam.gymcrm.infrastructure.persistence.dao;
 
 import com.epam.gymcrm.dao.TrainingTypeDao;
 import com.epam.gymcrm.support.PersistenceTest;

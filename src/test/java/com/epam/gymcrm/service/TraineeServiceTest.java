@@ -29,8 +29,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -63,7 +63,7 @@ class TraineeServiceTest {
     }
 
     private Trainer trainerWithUsername(String username) {
-        return new Trainer(new User("T", "T", username, "pw"), mock(TrainingType.class));
+        return new Trainer(new User("T", "T", username, "pw"), new TrainingType(1L, "Yoga"));
     }
 
     @Test
@@ -121,6 +121,7 @@ class TraineeServiceTest {
         service.changePassword(CREDENTIALS, "newSecret");
 
         assertEquals("newSecret", trainee.getUser().getPassword());
+        verify(traineeDao).update(trainee);
     }
 
     @Test
@@ -160,6 +161,7 @@ class TraineeServiceTest {
 
         assertFalse(service.toggleActivation(CREDENTIALS));
         assertTrue(service.toggleActivation(CREDENTIALS));
+        verify(traineeDao, times(2)).update(trainee);
     }
 
     @Test

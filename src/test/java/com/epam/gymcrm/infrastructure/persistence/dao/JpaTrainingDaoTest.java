@@ -1,8 +1,14 @@
-package com.epam.gymcrm.dao.jpa;
+package com.epam.gymcrm.infrastructure.persistence.dao;
 
+import com.epam.gymcrm.dao.TraineeDao;
+import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.TrainingDao;
+import com.epam.gymcrm.dao.TrainingTypeDao;
 import com.epam.gymcrm.dto.TraineeTrainingCriteria;
 import com.epam.gymcrm.dto.TrainerTrainingCriteria;
+import com.epam.gymcrm.infrastructure.persistence.entity.TraineeEntity;
+import com.epam.gymcrm.infrastructure.persistence.entity.TrainerEntity;
+import com.epam.gymcrm.infrastructure.persistence.entity.TrainingEntity;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
@@ -25,13 +31,19 @@ class JpaTrainingDaoTest extends PersistenceTest {
 
     @Autowired
     private TrainingDao trainingDao;
+    @Autowired
+    private TraineeDao traineeDao;
+    @Autowired
+    private TrainerDao trainerDao;
+    @Autowired
+    private TrainingTypeDao trainingTypeDao;
 
     @BeforeEach
     void setUpData() {
-        Trainee john = persistTrainee("John", "Smith");
-        Trainee emily = persistTrainee("Emily", "Brown");
-        Trainer anna = persistTrainer("Anna", "Lee", "Yoga");
-        Trainer mark = persistTrainer("Mark", "Taylor", "Resistance");
+        TraineeEntity john = persistTrainee("John", "Smith");
+        TraineeEntity emily = persistTrainee("Emily", "Brown");
+        TrainerEntity anna = persistTrainer("Anna", "Lee", "Yoga");
+        TrainerEntity mark = persistTrainer("Mark", "Taylor", "Resistance");
 
         persistTraining(john, anna, "Yoga basics", "Yoga", MARCH_10);
         persistTraining(john, mark, "Heavy lifting", "Resistance", MARCH_1);
@@ -46,15 +58,19 @@ class JpaTrainingDaoTest extends PersistenceTest {
 
     @Test
     void save_persistsTraining() {
-        Trainee john = entityManager.createQuery("select t from Trainee t where t.user.username = 'John.Smith'", Trainee.class)
-                .getSingleResult();
-        Trainer anna = entityManager.createQuery("select t from Trainer t where t.user.username = 'Anna.Lee'", Trainer.class)
-                .getSingleResult();
+        Trainee john = traineeDao.findByUsername("John.Smith").orElseThrow();
+        Trainer anna = trainerDao.findByUsername("Anna.Lee").orElseThrow();
 
-        Training saved = trainingDao.save(new Training(john, anna, "New one", trainingType("Fitness"), MARCH_1, 45));
+        Training saved = trainingDao.save(new Training(
+                john.toParticipant(),
+                anna.toParticipant(),
+                "New one",
+                trainingTypeDao.findByName("Fitness").orElseThrow(),
+                MARCH_1,
+                45));
         flushAndClear();
 
-        assertEquals(45, entityManager.find(Training.class, saved.getId()).getDuration());
+        assertEquals(45, entityManager.find(TrainingEntity.class, saved.getId()).getDuration());
     }
 
     @Test
@@ -62,6 +78,16 @@ class JpaTrainingDaoTest extends PersistenceTest {
         List<Training> trainings = trainingDao.findByTrainee("John.Smith", TraineeTrainingCriteria.none());
 
         assertEquals(List.of("Heavy lifting", "Yoga basics", "Advanced yoga"), names(trainings));
+    }
+
+    @Test
+    void findByTrainee_buildsParticipantsAndType() {
+        Training first = trainingDao.findByTrainee("John.Smith", TraineeTrainingCriteria.none()).get(0);
+
+        assertEquals("John.Smith", first.getTrainee().username());
+        assertEquals("Mark", first.getTrainer().firstName());
+        assertEquals("Taylor", first.getTrainer().lastName());
+        assertEquals("Resistance", first.getTrainingType().getName());
     }
 
     @Test

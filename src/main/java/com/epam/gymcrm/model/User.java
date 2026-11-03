@@ -1,46 +1,32 @@
 package com.epam.gymcrm.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
-/** Account data shared by trainees and trainers (parent side of the one-to-one relations). */
-@Entity
-@Table(name = "users")
+/** Account data shared by trainees and trainers. */
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "first_name", nullable = false)
+    private final Long id;
+    private final String username;
     private String firstName;
-
-    @Column(name = "last_name", nullable = false)
     private String lastName;
-
-    @Column(nullable = false, unique = true)
-    private String username;
-
-    @Column(nullable = false)
     private String password;
-
-    @Column(name = "is_active", nullable = false)
     private boolean active;
 
-    protected User() {
-        // required by JPA
+    /** A new, active user that has not been stored yet. */
+    public User(String firstName, String lastName, String username, String password) {
+        this(null, firstName, lastName, username, password, true);
     }
 
-    public User(String firstName, String lastName, String username, String password) {
+    public User(Long id,
+                String firstName,
+                String lastName,
+                String username,
+                String password,
+                boolean active) {
+        this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.username = username;
         this.password = password;
-        this.active = true;
+        this.active = active;
     }
 
     /** Activates an inactive user and deactivates an active one. */

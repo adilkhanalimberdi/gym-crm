@@ -1,7 +1,7 @@
-package com.epam.gymcrm.dao.jpa;
+package com.epam.gymcrm.infrastructure.persistence.dao;
 
 import com.epam.gymcrm.dao.UserDao;
-import com.epam.gymcrm.model.User;
+import com.epam.gymcrm.infrastructure.persistence.entity.UserEntity;
 import com.epam.gymcrm.support.PersistenceTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,7 @@ class JpaUserDaoTest extends PersistenceTest {
     private UserDao userDao;
 
     private void persistUser(String username) {
-        entityManager.persist(new User("First", "Last", username, "pw"));
+        entityManager.persist(new UserEntity("First", "Last", username, "pw", true));
     }
 
     @Test

@@ -1,7 +1,10 @@
-package com.epam.gymcrm.dao.jpa;
+package com.epam.gymcrm.infrastructure.persistence.dao;
 
 import com.epam.gymcrm.dao.TrainerDao;
-import com.epam.gymcrm.model.Trainee;
+import com.epam.gymcrm.dao.TrainingTypeDao;
+import com.epam.gymcrm.exception.ResourceNotFoundException;
+import com.epam.gymcrm.infrastructure.persistence.entity.TraineeEntity;
+import com.epam.gymcrm.infrastructure.persistence.entity.TrainerEntity;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
 import com.epam.gymcrm.model.User;
@@ -13,20 +16,29 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JpaTrainerDaoTest extends PersistenceTest {
 
     @Autowired
     private TrainerDao trainerDao;
+    @Autowired
+    private TrainingTypeDao trainingTypeDao;
+
+    private TrainingType domainTrainingType(String name) {
+        return trainingTypeDao.findByName(name).orElseThrow();
+    }
 
     @Test
     void save_persistsTrainerWithUserAndSpecialization() {
-        TrainingType yoga = trainingType("Yoga");
-
-        trainerDao.save(new Trainer(new User("Anna", "Lee", "Anna.Lee", "pw"), yoga));
+        Trainer saved = trainerDao.save(new Trainer(new User("Anna", "Lee", "Anna.Lee", "pw"), domainTrainingType("Yoga")));
         flushAndClear();
 
+        assertNotNull(saved.getId());
+        assertEquals("Yoga", saved.getSpecialization().getName());
         Trainer loaded = trainerDao.findByUsername("Anna.Lee").orElseThrow();
         assertEquals("Yoga", loaded.getSpecialization().getName());
         assertEquals("Lee", loaded.getUser().getLastName());
@@ -38,17 +50,29 @@ class JpaTrainerDaoTest extends PersistenceTest {
     }
 
     @Test
-    void update_storesNewSpecialization() {
+    void update_storesNewSpecializationAndUserChanges() {
         persistTrainer("Anna", "Lee", "Yoga");
         flushAndClear();
-        Trainer detached = trainerDao.findByUsername("Anna.Lee").orElseThrow();
-        entityManager.detach(detached);
-        detached.setSpecialization(trainingType("Zumba"));
+        Trainer loaded = trainerDao.findByUsername("Anna.Lee").orElseThrow();
+        loaded.setSpecialization(domainTrainingType("Zumba"));
+        loaded.getUser().setPassword("newSecret");
+        loaded.getUser().toggleActive();
 
-        trainerDao.update(detached);
+        Trainer updated = trainerDao.update(loaded);
         flushAndClear();
 
-        assertEquals("Zumba", trainerDao.findByUsername("Anna.Lee").orElseThrow().getSpecialization().getName());
+        assertEquals("Zumba", updated.getSpecialization().getName());
+        Trainer stored = trainerDao.findByUsername("Anna.Lee").orElseThrow();
+        assertEquals("Zumba", stored.getSpecialization().getName());
+        assertEquals("newSecret", stored.getUser().getPassword());
+        assertFalse(stored.getUser().isActive());
+    }
+
+    @Test
+    void update_fails_whenTrainerNoLongerExists() {
+        Trainer missing = new Trainer(-1L, new User("No", "One", "No.One", "pw"), domainTrainingType("Yoga"));
+
+        assertThrows(ResourceNotFoundException.class, () -> trainerDao.update(missing));
     }
 
     @Test
@@ -70,8 +94,8 @@ class JpaTrainerDaoTest extends PersistenceTest {
 
     @Test
     void findNotAssignedToTrainee_excludesAssignedTrainers() {
-        Trainee trainee = persistTrainee("John", "Smith");
-        Trainer assigned = persistTrainer("Anna", "Lee", "Yoga");
+        TraineeEntity trainee = persistTrainee("John", "Smith");
+        TrainerEntity assigned = persistTrainer("Anna", "Lee", "Yoga");
         persistTrainer("Mark", "Taylor", "Fitness");
         persistTrainer("Olga", "King", "Zumba");
         trainee.replaceTrainers(List.of(assigned));

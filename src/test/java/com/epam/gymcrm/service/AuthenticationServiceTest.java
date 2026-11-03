@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -87,7 +86,7 @@ class AuthenticationServiceTest {
 
     @Test
     void authenticateTrainer_returnsTrainer_whenPasswordMatches() {
-        Trainer trainer = new Trainer(user, mock(TrainingType.class));
+        Trainer trainer = new Trainer(user, new TrainingType(1L, "Yoga"));
         when(trainerDao.findByUsername("John.Smith")).thenReturn(Optional.of(trainer));
 
         assertSame(trainer, service.authenticateTrainer(VALID));
@@ -95,7 +94,7 @@ class AuthenticationServiceTest {
 
     @Test
     void authenticateTrainer_fails_whenPasswordIsWrong() {
-        Trainer trainer = new Trainer(user, mock(TrainingType.class));
+        Trainer trainer = new Trainer(user, new TrainingType(1L, "Yoga"));
         when(trainerDao.findByUsername("John.Smith")).thenReturn(Optional.of(trainer));
 
         assertThrows(AuthenticationFailedException.class, () -> service.authenticateTrainer(WRONG_PASSWORD));
@@ -112,7 +111,7 @@ class AuthenticationServiceTest {
     @Test
     void matchesTrainer_reportsWhetherCredentialsAreValid() {
         when(trainerDao.findByUsername("John.Smith"))
-                .thenReturn(Optional.of(new Trainer(user, mock(TrainingType.class))));
+                .thenReturn(Optional.of(new Trainer(user, new TrainingType(1L, "Yoga"))));
 
         assertTrue(service.matchesTrainer(VALID));
         assertFalse(service.matchesTrainer(WRONG_PASSWORD));

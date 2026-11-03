@@ -1,32 +1,14 @@
 package com.epam.gymcrm.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import org.hibernate.annotations.Immutable;
-
-/**
- * Constant list of training types (filled by import.sql). It lives in its own table because many
- * trainings and trainers share the same few values, and being {@link Immutable} keeps the
- * application from changing it.
- */
-@Entity
-@Immutable
-@Table(name = "training_types")
+/** One value of the constant list of training types; it has no setters because it cannot be changed. */
 public class TrainingType {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private final Long id;
+    private final String name;
 
-    @Column(nullable = false, unique = true)
-    private String name;
-
-    protected TrainingType() {
-        // required by JPA
+    public TrainingType(Long id, String name) {
+        this.id = id;
+        this.name = name;
     }
 
     public Long getId() {

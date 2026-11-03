@@ -184,8 +184,8 @@ class GymFacadeTest extends PersistenceTest {
         flushAndClear();
 
         assertFalse(facade.traineeCredentialsMatch(traineeCredentials));
-        assertEquals(0, count("select count(t) from Training t"));
-        assertEquals(0, count("select count(u) from User u where u.username = 'John.Smith'"));
+        assertEquals(0, count("select count(t) from TrainingEntity t"));
+        assertEquals(0, count("select count(u) from UserEntity u where u.username = 'John.Smith'"));
         assertTrue(facade.trainerCredentialsMatch(trainerCredentials));
         assertEquals(List.of(), facade.getTrainerTrainings(trainerCredentials, TrainerTrainingCriteria.none()));
     }

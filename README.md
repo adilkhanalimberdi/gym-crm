@@ -11,7 +11,7 @@ This is the second version of the project. The first version kept everything in 
 - `User` holds first name, last name, username, password and the active flag. `Trainee` and `Trainer` each have a one-to-one relation to their `User`.
 - `Trainee` and `Trainer` have a many-to-many relation (join table `trainee_trainer`, owned by `Trainee`).
 - `Training` belongs to one trainee and one trainer (foreign keys) and has a `TrainingType`.
-- `TrainingType` is a constant list (`import.sql`). The entity is `@Immutable` and has no write DAO, so the application cannot change it. It is a separate table because many trainings and trainers share the same few values.
+- `TrainingType` is a constant list (`import.sql`). `TrainingTypeEntity` is `@Immutable` and there is no write DAO, so the application cannot change it. It is a separate table because many trainings and trainers share the same few values.
 - Deleting a trainee is a hard delete. It cascades to the trainee's user and trainings.
 
 **Layers**
@@ -20,9 +20,18 @@ This is the second version of the project. The first version kept everything in 
 | --- | --- | --- |
 | Facade | `facade` | `GymFacade`, the single entry point |
 | Services | `service` | transactions (`@Transactional`), validation, authentication, username/password generation |
-| DAOs | `dao`, `dao.jpa` | `EntityManager`, JPQL and the Criteria API |
-| Entities | `model` | JPA entities |
+| Ports | `dao` | DAO interfaces the services depend on; they work with domain objects only |
+| Domain | `model` | plain Java classes with behaviour (`toggleActive()`, `replaceTrainers(...)`), no framework imports |
+| Persistence adapters | `infrastructure.persistence.dao` | `JpaXxxDao` implementations: `EntityManager`, JPQL and the Criteria API |
+| JPA entities | `infrastructure.persistence.entity` | `TraineeEntity`, ... with all annotations, cascades and fetch types |
+| Entity mapping | `infrastructure.persistence.mapper` | `EntityMapper` converts between entities and domain objects |
 | Config | `config` | Java-based Spring configuration, Hibernate, Hikari pool, transaction manager |
+
+Dependencies point inward: `infrastructure` -> `service`, `dao` -> `model`. The facade and the services never see an entity, so nothing a caller receives can be detached or lazy.
+
+**Fetching**
+
+All associations are `LAZY`. Every DAO query fetches what its domain object is built from, so one lookup or search is one SQL statement, however many rows it returns.
 
 **Rules**
 

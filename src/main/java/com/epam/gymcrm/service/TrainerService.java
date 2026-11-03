@@ -55,7 +55,7 @@ public class TrainerService {
         log.info("Creating trainer profile for {} {}", first, last);
 
         Credentials generated = new Credentials(usernameGenerator.generate(first, last), passwordGenerator.generate());
-        Trainer created = trainerDao.save(mapper.toEntity(request, specialization, generated));
+        Trainer created = trainerDao.save(mapper.toDomain(request, specialization, generated));
         log.info("Created trainer profile with username '{}'", generated.username());
         return created;
     }
@@ -76,6 +76,7 @@ public class TrainerService {
     public void changePassword(Credentials credentials, String newPassword) {
         Trainer trainer = authenticationService.authenticateTrainer(credentials);
         trainer.getUser().setPassword(requireText(newPassword, "New password"));
+        trainerDao.update(trainer);
         log.info("Changed password of trainer '{}'", credentials.username());
     }
 
@@ -90,8 +91,10 @@ public class TrainerService {
 
     /** Not idempotent: an active trainer becomes inactive and the other way round. Returns the new state. */
     public boolean toggleActivation(Credentials credentials) {
-        User user = authenticationService.authenticateTrainer(credentials).getUser();
+        Trainer trainer = authenticationService.authenticateTrainer(credentials);
+        User user = trainer.getUser();
         user.toggleActive();
+        trainerDao.update(trainer);
         log.info("Trainer '{}' is now {}", credentials.username(), user.isActive() ? "active" : "inactive");
         return user.isActive();
     }

@@ -56,8 +56,7 @@ class TrainingServiceTest {
     private TrainingTypeDao trainingTypeDao;
     @Mock
     private AuthenticationService authenticationService;
-    @Mock
-    private TrainingType yoga;
+    private final TrainingType yoga = new TrainingType(1L, "Yoga");
     @InjectMocks
     private TrainingService service;
 
@@ -83,8 +82,8 @@ class TrainingServiceTest {
 
         Training created = service.addTraining(TRAINEE_CREDENTIALS, REQUEST);
 
-        assertSame(trainee, created.getTrainee());
-        assertSame(trainer, created.getTrainer());
+        assertEquals(trainee.toParticipant(), created.getTrainee());
+        assertEquals(trainer.toParticipant(), created.getTrainer());
         assertSame(yoga, created.getTrainingType());
         assertEquals("Morning Yoga", created.getTrainingName());
         assertEquals(DATE, created.getTrainingDate());
@@ -158,7 +157,7 @@ class TrainingServiceTest {
     @Test
     void getTraineeTrainings_returnsTrainingsFromDao() {
         var criteria = new TraineeTrainingCriteria(DATE, DATE.plusDays(5), "Anna", "Yoga");
-        List<Training> trainings = List.of(new Training(trainee, trainer, "Yoga", yoga, DATE, 60));
+        List<Training> trainings = List.of(new Training(trainee.toParticipant(), trainer.toParticipant(), "Yoga", yoga, DATE, 60));
         when(trainingDao.findByTrainee("John.Smith", criteria)).thenReturn(trainings);
 
         assertEquals(trainings, service.getTraineeTrainings(TRAINEE_CREDENTIALS, criteria));
@@ -176,7 +175,7 @@ class TrainingServiceTest {
     @Test
     void getTrainerTrainings_returnsTrainingsFromDao() {
         var criteria = new TrainerTrainingCriteria(null, null, "John");
-        List<Training> trainings = List.of(new Training(trainee, trainer, "Yoga", yoga, DATE, 60));
+        List<Training> trainings = List.of(new Training(trainee.toParticipant(), trainer.toParticipant(), "Yoga", yoga, DATE, 60));
         when(trainingDao.findByTrainer("Anna.Lee", criteria)).thenReturn(trainings);
 
         assertEquals(trainings, service.getTrainerTrainings(TRAINER_CREDENTIALS, criteria));

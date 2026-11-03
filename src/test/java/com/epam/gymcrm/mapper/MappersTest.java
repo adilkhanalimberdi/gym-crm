@@ -7,9 +7,6 @@ import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 
@@ -18,19 +15,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@ExtendWith(MockitoExtension.class)
 class MappersTest {
 
     private static final Credentials GENERATED = new Credentials("John.Smith1", "abcde12345");
 
-    @Mock
-    private TrainingType yoga;
+    private final TrainingType yoga = new TrainingType(1L, "Yoga");
 
     @Test
     void traineeMapper_buildsActiveTraineeWithGeneratedCredentials() {
         var request = new CreateTraineeRequest(" John ", "Smith ", LocalDate.of(1990, 5, 14), "Street 1");
 
-        Trainee trainee = new TraineeMapper().toEntity(request, GENERATED);
+        Trainee trainee = new TraineeMapper().toDomain(request, GENERATED);
 
         assertNull(trainee.getId());
         assertEquals("John", trainee.getUser().getFirstName());
@@ -46,7 +41,7 @@ class MappersTest {
     void trainerMapper_buildsActiveTrainerWithGivenSpecialization() {
         var request = new CreateTrainerRequest("Anna", "Lee", "Yoga");
 
-        Trainer trainer = new TrainerMapper().toEntity(request, yoga, new Credentials("Anna.Lee", "pw"));
+        Trainer trainer = new TrainerMapper().toDomain(request, yoga, new Credentials("Anna.Lee", "pw"));
 
         assertNull(trainer.getId());
         assertEquals("Anna", trainer.getUser().getFirstName());

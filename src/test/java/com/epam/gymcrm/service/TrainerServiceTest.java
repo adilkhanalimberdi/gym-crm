@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -49,10 +50,8 @@ class TrainerServiceTest {
     private PasswordGenerator passwordGenerator;
     @Spy
     private TrainerMapper mapper = new TrainerMapper();
-    @Mock
-    private TrainingType yoga;
-    @Mock
-    private TrainingType zumba;
+    private final TrainingType yoga = new TrainingType(1L, "Yoga");
+    private final TrainingType zumba = new TrainingType(2L, "Zumba");
     @InjectMocks
     private TrainerService service;
 
@@ -119,6 +118,7 @@ class TrainerServiceTest {
         service.changePassword(CREDENTIALS, "newSecret");
 
         assertEquals("newSecret", trainer.getUser().getPassword());
+        verify(trainerDao).update(trainer);
     }
 
     @Test
@@ -155,5 +155,6 @@ class TrainerServiceTest {
 
         assertFalse(service.toggleActivation(CREDENTIALS));
         assertTrue(service.toggleActivation(CREDENTIALS));
+        verify(trainerDao, times(2)).update(trainer);
     }
 }

@@ -67,7 +67,13 @@ public class TrainingService {
         TrainingType type = trainingTypeDao.findByName(requireText(request.trainingTypeName(), "Training type"))
                 .orElseThrow(() -> new ResourceNotFoundException("Training type", request.trainingTypeName()));
 
-        Training created = trainingDao.save(new Training(trainee, trainer, trainingName, type, trainingDate, duration));
+        Training created = trainingDao.save(new Training(
+                trainee.toParticipant(),
+                trainer.toParticipant(),
+                trainingName,
+                type,
+                trainingDate,
+                duration));
         log.info("Added training '{}' for trainee '{}' with trainer '{}'",
                 trainingName, request.traineeUsername(), request.trainerUsername());
         return created;

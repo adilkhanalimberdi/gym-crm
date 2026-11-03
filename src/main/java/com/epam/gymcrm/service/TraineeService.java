@@ -59,7 +59,7 @@ public class TraineeService {
         log.info("Creating trainee profile for {} {}", first, last);
 
         Credentials generated = new Credentials(usernameGenerator.generate(first, last), passwordGenerator.generate());
-        Trainee created = traineeDao.save(mapper.toEntity(request, generated));
+        Trainee created = traineeDao.save(mapper.toDomain(request, generated));
         log.info("Created trainee profile with username '{}'", generated.username());
         return created;
     }
@@ -80,6 +80,7 @@ public class TraineeService {
     public void changePassword(Credentials credentials, String newPassword) {
         Trainee trainee = authenticationService.authenticateTrainee(credentials);
         trainee.getUser().setPassword(requireText(newPassword, "New password"));
+        traineeDao.update(trainee);
         log.info("Changed password of trainee '{}'", credentials.username());
     }
 
@@ -95,8 +96,10 @@ public class TraineeService {
 
     /** Not idempotent: an active trainee becomes inactive and the other way round. Returns the new state. */
     public boolean toggleActivation(Credentials credentials) {
-        User user = authenticationService.authenticateTrainee(credentials).getUser();
+        Trainee trainee = authenticationService.authenticateTrainee(credentials);
+        User user = trainee.getUser();
         user.toggleActive();
+        traineeDao.update(trainee);
         log.info("Trainee '{}' is now {}", credentials.username(), user.isActive() ? "active" : "inactive");
         return user.isActive();
     }

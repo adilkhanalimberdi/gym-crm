@@ -1,38 +1,26 @@
 package com.epam.gymcrm.model;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import java.util.Objects;
 
-@Entity
-@Table(name = "trainers")
 public class Trainer {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "specialization_id", nullable = false)
+    private final Long id;
+    private final User user;
     private TrainingType specialization;
 
-    @OneToOne(cascade = CascadeType.ALL, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
-
-    protected Trainer() {
-        // required by JPA
+    /** A new trainer that has not been stored yet. */
+    public Trainer(User user, TrainingType specialization) {
+        this(null, user, specialization);
     }
 
-    public Trainer(User user, TrainingType specialization) {
+    public Trainer(Long id, User user, TrainingType specialization) {
+        this.id = id;
         this.user = user;
         this.specialization = specialization;
+    }
+
+    public TrainingParticipant toParticipant() {
+        return new TrainingParticipant(id, user.getUsername(), user.getFirstName(), user.getLastName());
     }
 
     public Long getId() {
@@ -49,6 +37,18 @@ public class Trainer {
 
     public void setSpecialization(TrainingType specialization) {
         this.specialization = specialization;
+    }
+
+    /** Two trainers are the same when they have the same username, which is unique and never changes. */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof Trainer trainer
+                && Objects.equals(user.getUsername(), trainer.user.getUsername());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(user.getUsername());
     }
 
     @Override

@@ -14,7 +14,7 @@ public class TrainerMapper {
      * Builds a new trainer and its user. The specialization is looked up by the service
      * (the request only has its name); the generated username and password come in as credentials.
      */
-    public Trainer toEntity(CreateTrainerRequest request, TrainingType specialization, Credentials generated) {
+    public Trainer toDomain(CreateTrainerRequest request, TrainingType specialization, Credentials generated) {
         User user = new User(
                 request.firstName().trim(),
                 request.lastName().trim(),

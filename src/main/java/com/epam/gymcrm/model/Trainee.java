@@ -1,65 +1,44 @@
 package com.epam.gymcrm.model;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity
-@Table(name = "trainees")
 public class Trainee {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "date_of_birth")
+    private final Long id;
+    private final User user;
+    private final Set<Trainer> trainers;
     private LocalDate dateOfBirth;
-
     private String address;
 
-    @OneToOne(cascade = CascadeType.ALL, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
-
-    /** Trainers assigned to this trainee; the trainee owns the trainee_trainer join table. */
-    @ManyToMany
-    @JoinTable(name = "trainee_trainer",
-            joinColumns = @JoinColumn(name = "trainee_id"),
-            inverseJoinColumns = @JoinColumn(name = "trainer_id"))
-    private Set<Trainer> trainers = new HashSet<>();
-
-    /** Removing a trainee removes all of its trainings as well. */
-    @OneToMany(mappedBy = "trainee", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private Set<Training> trainings = new HashSet<>();
-
-    protected Trainee() {
-        // required by JPA
+    /** A new trainee without trainers that has not been stored yet. */
+    public Trainee(User user, LocalDate dateOfBirth, String address) {
+        this(null, user, dateOfBirth, address, Set.of());
     }
 
-    public Trainee(User user, LocalDate dateOfBirth, String address) {
+    public Trainee(Long id,
+                   User user,
+                   LocalDate dateOfBirth,
+                   String address,
+                   Collection<Trainer> trainers) {
+        this.id = id;
         this.user = user;
         this.dateOfBirth = dateOfBirth;
         this.address = address;
+        this.trainers = new HashSet<>(trainers);
     }
 
     /** Replaces the assigned trainers with the given ones. */
     public void replaceTrainers(Collection<Trainer> newTrainers) {
-        trainers.retainAll(newTrainers);
+        trainers.clear();
         trainers.addAll(newTrainers);
+    }
+
+    public TrainingParticipant toParticipant() {
+        return new TrainingParticipant(id, user.getUsername(), user.getFirstName(), user.getLastName());
     }
 
     public Long getId() {
@@ -86,8 +65,9 @@ public class Trainee {
         this.address = address;
     }
 
+    /** The assigned trainers, read-only; use {@link #replaceTrainers} to change them. */
     public Set<Trainer> getTrainers() {
-        return trainers;
+        return Collections.unmodifiableSet(trainers);
     }
 
     @Override

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 public class TraineeMapper {
 
     /** Builds a new trainee and its user; the generated username and password come in as credentials. */
-    public Trainee toEntity(CreateTraineeRequest request, Credentials generated) {
+    public Trainee toDomain(CreateTraineeRequest request, Credentials generated) {
         User user = new User(
                 request.firstName().trim(),
                 request.lastName().trim(),

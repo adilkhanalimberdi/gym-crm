@@ -22,7 +22,7 @@ import java.util.Properties;
 @EnableTransactionManagement
 public class PersistenceConfig {
 
-    private static final String ENTITY_PACKAGE = "com.epam.gymcrm.model";
+    private static final String ENTITY_PACKAGE = "com.epam.gymcrm.infrastructure.persistence.entity";
 
     @Bean(destroyMethod = "close")
     public DataSource dataSource(@Value("${db.url}") String url,
