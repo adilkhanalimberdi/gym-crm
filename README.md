@@ -61,6 +61,7 @@ Swagger UI is at `http://localhost:8080/swagger-ui.html`, the OpenAPI document a
 
 - **Transaction level:** every request gets a `transactionId` (taken from the `X-Transaction-Id` header when the caller sends a harmless one, generated otherwise). It is in every log line (`[...]` in the pattern), in the `X-Transaction-Id` response header and in error bodies. `TransactionId.current()` returns it for passing on to downstream services.
 - **REST call level:** `RestCallLoggingFilter` writes one line per call with the method, endpoint, status and duration. It is `INFO` for 2xx/3xx, `WARN` for 4xx and `ERROR` for 5xx. Request and response bodies contain personal data, so they are only written at `DEBUG` (passwords masked). The `Authorization` header is never logged.
+- **Log level:** `INFO` by default. Enable `DEBUG` with the `debug` profile (`--spring.profiles.active=debug`) or the environment variable `LOGGING_LEVEL_COM_EPAM_GYMCRM=DEBUG`; do not do that in production.
 
 ## Quick start
 
