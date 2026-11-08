@@ -5,6 +5,7 @@ import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.UserDao;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
+import com.epam.gymcrm.metrics.GymCrmMetrics;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.User;
@@ -27,6 +28,7 @@ public class AuthenticationService {
     private final UserDao userDao;
     private final TraineeDao traineeDao;
     private final TrainerDao trainerDao;
+    private final GymCrmMetrics metrics;
 
     public User authenticate(Credentials credentials) {
         return orElseFail(findUser(credentials), credentials);
@@ -56,10 +58,13 @@ public class AuthenticationService {
     }
 
     private <T> T orElseFail(Optional<T> match, Credentials credentials) {
-        return match.orElseThrow(() -> {
+        if (match.isEmpty()) {
+            metrics.recordFailedAuthentication();
             log.warn("Authentication failed for username '{}'", credentials.username());
-            return new AuthenticationFailedException();
-        });
+            throw new AuthenticationFailedException();
+        }
+        metrics.recordSuccessfulAuthentication();
+        return match.get();
     }
 
     private boolean passwordMatches(User user, Credentials credentials) {

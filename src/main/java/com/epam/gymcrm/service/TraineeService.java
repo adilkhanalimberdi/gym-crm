@@ -7,6 +7,7 @@ import com.epam.gymcrm.dto.request.RegisterTraineeRequest;
 import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.mapper.GymCrmMapper;
+import com.epam.gymcrm.metrics.GymCrmMetrics;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class TraineeService {
     private final UsernameGenerator usernameGenerator;
     private final PasswordGenerator passwordGenerator;
     private final GymCrmMapper mapper;
+    private final GymCrmMetrics metrics;
 
     public Trainee create(RegisterTraineeRequest request) {
         Credentials generated = new Credentials(
@@ -43,6 +45,7 @@ public class TraineeService {
                 passwordGenerator.generate()
         );
         Trainee created = traineeDao.save(mapper.toTrainee(request, generated));
+        metrics.recordTraineeRegistration();
         log.info("Created trainee profile with username '{}'", generated.username());
         return created;
     }

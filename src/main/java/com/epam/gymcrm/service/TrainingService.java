@@ -10,6 +10,7 @@ import com.epam.gymcrm.dto.request.AddTrainingRequest;
 import com.epam.gymcrm.exception.AccessDeniedException;
 import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.exception.InvalidRequestException;
+import com.epam.gymcrm.metrics.GymCrmMetrics;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
@@ -32,6 +33,7 @@ public class TrainingService {
     private final TraineeDao traineeDao;
     private final TrainerDao trainerDao;
     private final AuthenticationService authenticationService;
+    private final GymCrmMetrics metrics;
 
     /** The caller has to be the trainee or the trainer of the new training. */
     public Training addTraining(Credentials credentials, AddTrainingRequest request) {
@@ -55,6 +57,7 @@ public class TrainingService {
                 request.duration()
         );
         Training created = trainingDao.save(training);
+        metrics.recordTrainingCreated(trainer.getSpecialization().getName());
         log.info(
                 "Added training '{}' for trainee '{}' with trainer '{}'",
                 request.trainingName(),
