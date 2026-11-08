@@ -2,7 +2,7 @@
 
 REST API for a gym CRM: trainees, trainers and trainings, built with Spring Boot and persisted in a relational database with JPA and Hibernate.
 
-This is the third version of the project. The first kept everything in in-memory maps, the second moved it to a database (Spring + Hibernate), this one puts a REST API on top of it.
+This is the fourth version of the project. The first kept everything in in-memory maps, the second moved it to a database (Spring + Hibernate), the third put a REST API on top of it, this one adds monitoring and separate environments.
 
 ## Overview
 
@@ -21,6 +21,7 @@ This is the third version of the project. The first kept everything in in-memory
 | Controllers | `web.controller` | `@RestController`s documented with Swagger annotations |
 | DTOs and mapping | `dto.request`, `dto.response`, `mapper` | one request type per use case (validated once, at the REST boundary), response objects, one `GymCrmMapper` |
 | Web support | `web.error`, `web.security`, `web.logging` | error handling (domain exceptions carry their HTTP status), Basic credentials, logging filters |
+| Monitoring | `health`, `metrics` | custom health indicators and Prometheus counters |
 | Services | `service` | transactions (`@Transactional`), authentication, username/password generation |
 | DAOs | `dao`, `dao.jpa` | `EntityManager`, JPQL and the Criteria API |
 | Entities | `model` | JPA entities |
@@ -62,11 +63,31 @@ Swagger UI is at `http://localhost:8080/swagger-ui.html`, the OpenAPI document a
 
 - **Transaction level:** every request gets a `transactionId` (taken from the `X-Transaction-Id` header when the caller sends a harmless one, generated otherwise). It is in every log line (`[...]` in the pattern), in the `X-Transaction-Id` response header and in error bodies. `TransactionId.current()` returns it for passing on to downstream services.
 - **REST call level:** `RestCallLoggingFilter` writes one line per call with the method, endpoint, status and duration. It is `INFO` for 2xx/3xx, `WARN` for 4xx and `ERROR` for 5xx. Request and response bodies contain personal data, so they are only written at `DEBUG` (passwords masked). The `Authorization` header is never logged.
-- **Log level:** `INFO` by default. Enable `DEBUG` with the `debug` profile (`--spring.profiles.active=debug`) or the environment variable `LOGGING_LEVEL_COM_EPAM_GYMCRM=DEBUG`; do not do that in production.
+- **Log level:** `INFO` by default. Enable `DEBUG` by adding the `debug` profile to an environment (`--spring.profiles.active=local,debug`) or the environment variable `LOGGING_LEVEL_COM_EPAM_GYMCRM=DEBUG`; do not do that in production.
+
+## Monitoring
+
+Actuator is at `/actuator`: `health` and `prometheus` in every environment, `info` and `metrics` in `local` and `dev` only. Actuator endpoints have no authentication of their own, so `/actuator` should stay reachable only from inside the deployment network.
+
+**Custom health indicators** (details are shown in `local` and `dev`):
+
+| Component | Down when |
+| --- | --- |
+| `trainingTypes` | no training types are loaded or the database cannot be read |
+| `connectionPool` | threads are waiting for a database connection and none is free |
+| `heapMemory` | used heap is over `gym-crm.health.heap-max-used-ratio` (0.9 by default) |
+
+**Custom Prometheus metrics:**
+
+| Metric | Tags |
+| --- | --- |
+| `gym_crm_registrations_total` | `role` = `trainee`, `trainer` |
+| `gym_crm_authentications_total` | `result` = `success`, `failure` |
+| `gym_crm_trainings_created_total` | `training_type` |
 
 ## Quick start
 
-Requires JDK 21 and Maven 3.9+. No database needs to be installed: the default configuration uses in-memory H2.
+Requires JDK 21 and Maven 3.9+. No database needs to be installed: the default `local` profile uses in-memory H2.
 
 ```bash
 mvn spring-boot:run   # start the API on port 8080
@@ -77,6 +98,15 @@ The coverage report is written to `target/site/jacoco/index.html`.
 
 ## Configuration
 
-Database and logging settings are in `src/main/resources/application.properties`. To use another DBMS (for example PostgreSQL), change the `spring.datasource.*` values and add its JDBC driver to `pom.xml`. The schema is generated from the entities on startup (`spring.jpa.hibernate.ddl-auto=create-drop`) and training types are loaded from `src/main/resources/import.sql`.
+Shared settings are in `src/main/resources/application.properties`; each environment has its own `application-<profile>.properties`. Choose one with `--spring.profiles.active=<profile>` or `SPRING_PROFILES_ACTIVE`.
 
-**Stack:** Java 21, Maven, Spring Boot 3, Hibernate 6, H2, springdoc-openapi, Lombok, SLF4J + Logback, JUnit 5, Mockito, JaCoCo.
+| Profile | Database | Connection pool | Schema |
+| --- | --- | --- | --- |
+| `local` (default) | in-memory H2 | 5 | generated from the entities, training types from `import.sql` |
+| `dev` | PostgreSQL, `DB_URL` (default `localhost:5432/gym_crm_dev`) | 5 | Flyway, validated by Hibernate |
+| `stg` | PostgreSQL, `DB_URL` | 10 | Flyway, validated by Hibernate |
+| `prod` | PostgreSQL, `DB_URL` | 20 | Flyway, validated by Hibernate |
+
+`dev`, `stg` and `prod` read `DB_USERNAME` and `DB_PASSWORD` from the environment, and `stg` and `prod` require `DB_URL` too. Migrations are in `src/main/resources/db/migration`.
+
+**Stack:** Java 21, Maven, Spring Boot 3, Spring Boot Actuator, Micrometer + Prometheus, Hibernate 6, Flyway, PostgreSQL, H2, springdoc-openapi, Lombok, SLF4J + Logback, JUnit 5, Mockito, JaCoCo.
