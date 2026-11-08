@@ -13,7 +13,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:actuator-it;DB_CLOSE_DELAY=-1")
+@SpringBootTest(properties = {
+        "spring.datasource.url=jdbc:h2:mem:actuator-it;DB_CLOSE_DELAY=-1",
+        "management.endpoint.health.show-details=always"
+})
 @AutoConfigureMockMvc
 @AutoConfigureObservability(tracing = false)
 class ActuatorEndpointsTest {
@@ -26,6 +29,15 @@ class ActuatorEndpointsTest {
         mvc.perform(get("/actuator/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @Test
+    void health_includesCustomIndicators() throws Exception {
+        mvc.perform(get("/actuator/health"))
+                .andExpect(jsonPath("$.components.trainingTypes.status").value("UP"))
+                .andExpect(jsonPath("$.components.trainingTypes.details.count").value(5))
+                .andExpect(jsonPath("$.components.connectionPool.status").value("UP"))
+                .andExpect(jsonPath("$.components.heapMemory.status").value("UP"));
     }
 
     @Test
