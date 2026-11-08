@@ -44,6 +44,8 @@ class ActuatorEndpointsTest {
     void prometheus_publishesApplicationMetrics() throws Exception {
         mvc.perform(get("/actuator/prometheus"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("jvm_memory_used_bytes")));
+                .andExpect(content().string(containsString("jvm_memory_used_bytes")))
+                .andExpect(content().string(containsString("gym_crm_registrations_total")))
+                .andExpect(content().string(containsString("gym_crm_authentications_total")));
     }
 }
