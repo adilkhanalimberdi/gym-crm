@@ -5,6 +5,7 @@ import com.epam.gymcrm.dao.TrainerDao;
 import com.epam.gymcrm.dao.UserDao;
 import com.epam.gymcrm.dto.Credentials;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
+import com.epam.gymcrm.metrics.GymCrmMetrics;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,6 +43,8 @@ class AuthenticationServiceTest {
     private TraineeDao traineeDao;
     @Mock
     private TrainerDao trainerDao;
+    @Mock
+    private GymCrmMetrics metrics;
     @InjectMocks
     private AuthenticationService service;
 
@@ -49,6 +53,7 @@ class AuthenticationServiceTest {
         when(userDao.findByUsername("John.Smith")).thenReturn(Optional.of(user));
 
         assertSame(user, service.authenticate(VALID));
+        verify(metrics).recordSuccessfulAuthentication();
     }
 
     @Test
@@ -56,6 +61,7 @@ class AuthenticationServiceTest {
         when(userDao.findByUsername("John.Smith")).thenReturn(Optional.of(user));
 
         assertThrows(AuthenticationFailedException.class, () -> service.authenticate(WRONG_PASSWORD));
+        verify(metrics).recordFailedAuthentication();
     }
 
     @Test

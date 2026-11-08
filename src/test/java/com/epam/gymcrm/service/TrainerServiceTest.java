@@ -9,6 +9,7 @@ import com.epam.gymcrm.dto.request.RegisterTrainerRequest;
 import com.epam.gymcrm.dto.request.UpdateTrainerRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.mapper.GymCrmMapper;
+import com.epam.gymcrm.metrics.GymCrmMetrics;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
@@ -30,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -54,6 +56,8 @@ class TrainerServiceTest {
     private GymCrmMapper mapper = new GymCrmMapper();
     @Mock
     private TrainingType yoga;
+    @Mock
+    private GymCrmMetrics metrics;
     @InjectMocks
     private TrainerService service;
 
@@ -85,6 +89,7 @@ class TrainerServiceTest {
         assertEquals("Anna.Lee", created.getUser().getUsername());
         assertEquals("abcde12345", created.getUser().getPassword());
         assertTrue(created.getUser().isActive());
+        verify(metrics).recordTrainerRegistration();
         assertSame(yoga, created.getSpecialization());
     }
 

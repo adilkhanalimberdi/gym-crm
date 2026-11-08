@@ -9,6 +9,7 @@ import com.epam.gymcrm.dto.request.RegisterTrainerRequest;
 import com.epam.gymcrm.dto.request.UpdateTrainerRequest;
 import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.mapper.GymCrmMapper;
+import com.epam.gymcrm.metrics.GymCrmMetrics;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class TrainerService {
     private final UsernameGenerator usernameGenerator;
     private final PasswordGenerator passwordGenerator;
     private final GymCrmMapper mapper;
+    private final GymCrmMetrics metrics;
 
     public Trainer create(RegisterTrainerRequest request) {
         TrainingType specialization = findTrainingType(request.specializationId());
@@ -46,6 +48,7 @@ public class TrainerService {
                 specialization,
                 generated
         ));
+        metrics.recordTrainerRegistration();
         log.info("Created trainer profile with username '{}'", generated.username());
         return created;
     }

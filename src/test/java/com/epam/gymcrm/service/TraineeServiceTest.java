@@ -8,6 +8,7 @@ import com.epam.gymcrm.dto.request.UpdateTraineeRequest;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
 import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.mapper.GymCrmMapper;
+import com.epam.gymcrm.metrics.GymCrmMetrics;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.TrainingType;
@@ -50,6 +51,8 @@ class TraineeServiceTest {
     private PasswordGenerator passwordGenerator;
     @Spy
     private GymCrmMapper mapper = new GymCrmMapper();
+    @Mock
+    private GymCrmMetrics metrics;
     @InjectMocks
     private TraineeService service;
 
@@ -103,6 +106,7 @@ class TraineeServiceTest {
         assertEquals("abcde12345", created.getUser().getPassword());
         assertEquals("John", created.getUser().getFirstName());
         assertTrue(created.getUser().isActive());
+        verify(metrics).recordTraineeRegistration();
         assertEquals("Street 1", created.getAddress());
     }
 

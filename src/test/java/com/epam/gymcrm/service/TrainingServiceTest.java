@@ -11,6 +11,7 @@ import com.epam.gymcrm.exception.AccessDeniedException;
 import com.epam.gymcrm.exception.AuthenticationFailedException;
 import com.epam.gymcrm.exception.EntityNotFoundException;
 import com.epam.gymcrm.exception.InvalidRequestException;
+import com.epam.gymcrm.metrics.GymCrmMetrics;
 import com.epam.gymcrm.model.Trainee;
 import com.epam.gymcrm.model.Trainer;
 import com.epam.gymcrm.model.Training;
@@ -65,6 +66,8 @@ class TrainingServiceTest {
     private AuthenticationService authenticationService;
     @Mock
     private TrainingType yoga;
+    @Mock
+    private GymCrmMetrics metrics;
     @InjectMocks
     private TrainingService service;
 
@@ -98,6 +101,7 @@ class TrainingServiceTest {
 
     @Test
     void addTraining_savesTrainingOfTrainerSpecialization_whenCalledByTrainee() {
+        when(yoga.getName()).thenReturn("Yoga");
         stubExistingParticipants();
         when(trainingDao.save(any(Training.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -109,6 +113,7 @@ class TrainingServiceTest {
         assertEquals("Morning Yoga", created.getTrainingName());
         assertEquals(DATE, created.getTrainingDate());
         assertEquals(60, created.getDuration());
+        verify(metrics).recordTrainingCreated("Yoga");
     }
 
     @Test
